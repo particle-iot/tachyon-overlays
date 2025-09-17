@@ -1,0 +1,16 @@
+{
+  "name": "add-particle-repo",
+  "description": "Adds and configures the Particle debian repository.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/particle.list",
+      "destination": "/etc/apt/sources.list.d/particle.list",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-script",
+      "script": "install-gpg-key.sh"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "disable-failing-services",
+  "description": "Disables services installed by yocto that are known to fail.",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl disable camera_cgroup.service chg-policy.service dhcpd.service dhcpd6.service dnsmasq.service fs-scrub-daemon.service ipacm.service lunch-make-scripts.service qti_pppd.service ql-power-manager.service"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "rm -f /lib/systemd/system/multi-user.target.wants/fs-scrub-daemon.service || true"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "rm -f /lib/systemd/system/multi-user.target.wants/qti_pppd.service || true"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "rm -f /lib/systemd/system/multi-user.target.wants/ql-power-manager.service || true"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "rm -f /lib/systemd/system/local-fs.target.wants/ipacm.service || true"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "rm -f /lib/systemd/system/multi-user.target.wants/lunch-make-scripts.service || true"
+    }
+  ]
+}

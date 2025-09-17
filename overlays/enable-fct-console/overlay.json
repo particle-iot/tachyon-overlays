@@ -1,0 +1,14 @@
+{
+  "name": "enable-fct-console",
+  "description": "Enables the serial console in FCT mode.",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl add-wants ffbm adbd serial-getty@ttyMSM0"
+    },
+    {
+      "type": "chroot-script",
+      "script": "install-fct-ready-service.sh"
+    }
+  ]
+}

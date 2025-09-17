@@ -1,0 +1,12 @@
+{
+  "name": "increase-swap",
+  "description": "Increase minimum swap size, useful for desktop on 4 GB board",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/zram-setup",
+      "destination": "/sbin/zram-setup",
+      "permissions": "744"
+    }
+  ]
+}

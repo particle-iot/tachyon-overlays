@@ -1,0 +1,49 @@
+{
+  "name": "particle-manufacturing-tweaks",
+  "description": "Changes for manufacturing build only",
+  "commands": [
+    // Change gnome settings to auto login
+    {
+      "type": "chroot-script",
+      "script": "enable_autologin.sh"
+    },
+    // Copy default keyring with no password to avoid keyring prompt on login
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p -m 777 /home/particle/.local/share/keyrings/"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/keyrings/",
+      "destination": "/home/particle/.local/share/",
+      "permissions": "700"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "chmod -R 700 /home/particle/.local"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "chmod 600 /home/particle/.local/share/keyrings/Default_keyring.keyring"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "chmod 664 /home/particle/.local/share/keyrings/default"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "chown -R particle:particle /home/particle/.local/"
+    },
+    // Disable screensaver lock on suspend / inactivity
+    {
+      "type": "copy-into-chroot",
+      "source": "files/00-lockscreen",
+      "destination": "/etc/dconf/db/local.d/00-lockscreen",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "dconf update"
+    }
+  ]
+}

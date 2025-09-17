@@ -1,0 +1,10 @@
+{
+  "name": "add-firefox",
+  "description": "Adds in packages for firefox",
+  "commands": [
+    {
+      "type": "chroot-install-package",
+      "package": "firefox"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "add-vscode",
+  "description": "Adds in packages for vscode",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "add-vscode.sh"
+    }
+  ]
+}

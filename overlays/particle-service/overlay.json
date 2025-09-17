@@ -1,0 +1,34 @@
+{
+  "name": "add-particle-service",
+  "description": "Adds and configures the Particle service.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/particle.service",
+      "destination": "/etc/systemd/system/particle.service",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/particle-service.sh",
+      "destination": "/usr/bin/particle-service.sh",
+      "permissions": "755"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/systemd/system/sleep.target.wants/"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "ln -s /etc/systemd/system/particle.service /etc/systemd/system/sleep.target.wants/particle.service || true"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/systemd/system/multi-user.target.wants/"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "ln -s /etc/systemd/system/particle.service /etc/systemd/system/multi-user.target.wants/particle.service || true"
+    }
+  ]
+}

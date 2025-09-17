@@ -1,0 +1,34 @@
+{
+  "name": "add-gnome-tweaks",
+  "description": "Adds in gnome tweaks",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/dconf/db/local.d"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/00_extensions",
+      "destination": "/etc/dconf/db/local.d/00_extensions",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/dconf/profile"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/user",
+      "destination": "/etc/dconf/profile/user",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-script",
+      "script": "install_dock.sh"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "dconf update"
+    }
+  ]
+}

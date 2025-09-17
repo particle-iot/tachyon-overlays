@@ -1,0 +1,10 @@
+{
+  "name": "disable-weston-display",
+  "description": "Disable the init_display service by default so that no display shows in headless build",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl disable init_display.service"
+    }
+  ]
+}

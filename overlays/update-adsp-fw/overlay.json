@@ -1,0 +1,18 @@
+{
+  "name": "update-adsp-fw",
+  "description": "Updates the ADSP firmware.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/adsp_reboot.sh",
+      "destination": "/usr/bin/adsp_reboot.sh",
+      "permissions": "755"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "$RESOURCES/adsp/adsp.*",
+      "destination": "/usr/lib/firmware/",
+      "permissions": "644"
+    }
+  ]
+}

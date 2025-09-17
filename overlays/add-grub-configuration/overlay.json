@@ -1,0 +1,16 @@
+{
+    "name": "add-grub-configuration",
+    "description": "Adds default grub configuration",
+    "commands": [
+      {
+        "type": "copy-into-chroot",
+        "source": "files/50-tachyon.cfg",
+        "destination": "/etc/default/grub.d/50-tachyon.cfg",
+        "permissions": "644"
+      },
+      {
+        "type": "chroot-cmd",
+        "cmd": "update-grub"
+      }
+    ]
+}

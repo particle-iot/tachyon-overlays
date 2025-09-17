@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=Particle Setup
+Exec=bash -c 'sleep 5; exec /usr/bin/particle-tachyon-desktop-setup'
+X-GNOME-Autostart-enabled=true

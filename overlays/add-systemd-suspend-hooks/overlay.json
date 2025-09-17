@@ -1,0 +1,12 @@
+{
+  "name": "add-systemd-suspend-hooks",
+  "description": "Add script for systemd pre and post suspend hooks.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/services-toggle.sh",
+      "destination": "/lib/systemd/system-sleep/",
+      "permissions": "744"
+    }
+  ]
+}

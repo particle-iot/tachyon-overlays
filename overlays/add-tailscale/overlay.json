@@ -1,0 +1,10 @@
+{
+  "name": "add-tailscale",
+  "description": "Add Tailscale to the system",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "install-tailscale.sh"
+    }
+  ]
+}

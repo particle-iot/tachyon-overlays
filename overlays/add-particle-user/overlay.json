@@ -1,0 +1,33 @@
+{
+  "name": "add-particle-user",
+  "description": "Adds a user for Particle development and makes it sudo.",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "useradd -m -s /bin/bash -G sudo particle || true"
+    },
+    //check the particle user exists
+    {
+      "type": "chroot-cmd",
+      "cmd": "id -u particle"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "echo \"particle:particle\" | chpasswd -c SHA512"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /usr/share/backgrounds"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/team.jpg",
+      "destination": "/usr/share/backgrounds/team.jpg",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "usermod -aG video,plugdev,netdev particle"
+    }
+  ]
+}

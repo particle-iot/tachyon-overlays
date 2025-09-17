@@ -1,0 +1,16 @@
+{
+  "name": "add-docker",
+  "description": "Add docker to the image",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/pin-docker",
+      "destination": "/etc/apt/preferences.d/pin-docker",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-script",
+      "script": "install-docker.sh"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "pin-pkg-versions-cleanup",
+  "description": "Cleanup pinned package versions",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "rm /etc/apt/preferences.d/build-pins.pref"
+    }
+  ]
+}

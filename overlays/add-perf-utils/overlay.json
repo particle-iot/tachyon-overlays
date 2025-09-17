@@ -1,0 +1,24 @@
+{
+  "name": "add-perf-utils",
+  "description": "Adds in particle perf utils",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/coremark",
+      "destination": "/usr/bin/coremark",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/particle-cpuset.sh",
+      "destination": "/usr/bin/particle-cpuset.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/particle-thermal.py",
+      "destination": "/usr/bin/particle-thermal.py",
+      "permissions": "644"
+    }
+  ]
+}

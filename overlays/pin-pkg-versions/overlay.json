@@ -1,0 +1,10 @@
+{
+  "name": "pin-pkg-versions",
+  "description": "Pin package versions",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "pin-pkg-versions.py"
+    }
+  ]
+}

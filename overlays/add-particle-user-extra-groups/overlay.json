@@ -1,0 +1,10 @@
+{
+  "name": "add-particle-user-extra-groups",
+  "description": "Adds particle user to some extra groups",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "usermod -aG docker,i2c,bluetooth,adb,ssh,gpio particle"
+    }
+  ]
+}

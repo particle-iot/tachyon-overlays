@@ -1,0 +1,22 @@
+{
+  "name": "add-camera-support",
+  "description": "Adds in packages for camera",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "apt remove --purge qv4l2 -y"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "apt install cheese -y"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "apt install nautilus -y"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "apt install mpv -y"
+    }
+  ]
+}

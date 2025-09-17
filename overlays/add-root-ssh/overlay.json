@@ -1,0 +1,20 @@
+{
+  "name": "add-root-ssh",
+  "description": "Enables root SSH access by installing SSH, generating a key, and configuring the SSH server.",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "add-ssh.sh"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/systemd/system/ssh.service.d"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/ssh.override.conf",
+      "destination": "/etc/systemd/system/ssh.service.d/override.conf",
+      "permissions": "644"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+//This file supports comments - they are stripped out before the JSON file is parsed
+{
+    "name": "ubuntu-common-24.04",
+    "description": "Sets up the base system with required overlays and configurations.",
+    "steps": [
+      // {
+      //   "type": "overlay",
+      //   "name": "pin-pkg-versions"
+      // },
+      {
+        "type": "overlay",
+        "name": "add-particle-repo"
+      },
+      {
+        "type": "overlay",
+        "name": "add-tachyon-firmware-pkg"
+      },
+      {
+        "type": "overlay",
+        "name": "add-fstab-mounts"
+      },
+      {
+        "type": "overlay",
+        "name": "add-grub-configuration"
+      },
+      {
+        "type": "overlay",
+        "name": "growfs"
+      },
+      {
+        "type": "overlay",
+        "name": "add-particle-user"
+      },
+      {
+        "type": "overlay",
+        "name": "disable-wait-online-service"
+      },
+      {
+        "type": "overlay",
+        "name": "add-network-manager-policy"
+      },
+      {
+        "type": "overlay",
+        "name": "add-linux-tools"
+      }
+    ]
+  }
+  

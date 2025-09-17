@@ -1,0 +1,37 @@
+{
+  "name": "pre-overlay-setup",
+  "description": "Resolve /etc/resolv.conf for local access - we'll restore it later",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "rm /etc/resolv.conf",
+      "ignore-errors": true
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/resolv.conf",
+      "destination": "/etc/resolv.conf",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/90noconfirm",
+      "destination": "/etc/apt/apt.conf.d/90noconfirm",
+      "permissions": "644"
+    },
+    // {
+    //   "type": "copy-into-chroot",
+    //   "source": "files/95proxies",
+    //   "destination": "/etc/apt/apt.conf.d/95proxies",
+    //   "permissions": "644"
+    // },
+    {
+      "type": "chroot-cmd",
+      "cmd": "sed -i -e '1,/^Name:/ { /^Frontend:/d }' -e $'1,/^Name:/ { /^Templates:/a\\\nFrontend: noninteractive\n }' /etc/debconf.conf"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "h=$(hostname); awk -v h=\"$h\" '($1==\"127.0.1.1\" && $2==h){found=1} END{exit !found}' /etc/hosts || printf '127.0.1.1\\t%s\\n' \"$h\" >> /etc/hosts"
+    }
+  ]
+}

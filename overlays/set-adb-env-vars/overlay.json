@@ -1,0 +1,13 @@
+{
+  "name": "set-adb-env-vars",
+  "description": "Set environment variables for ADB shell.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/adbd",
+      "destination": "/etc/default/adbd",
+      "permissions": "644"
+    }
+  ]
+}
+

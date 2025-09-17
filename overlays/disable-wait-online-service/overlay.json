@@ -1,0 +1,10 @@
+{
+  "name": "disable-wait-online-service",
+  "description": "Disable the systemd-networkd-wait-online.service service by default",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl disable systemd-networkd-wait-online.service"
+    }
+  ]
+}

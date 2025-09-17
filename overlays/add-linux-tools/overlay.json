@@ -1,0 +1,10 @@
+{
+    "name": "add-linux-tools",
+    "description": "Adds linux-tools-qcom package for cpupower etc",
+    "commands": [
+      {
+        "type": "chroot-cmd",
+        "cmd": "apt update -y && apt install -y linux-tools-qcom lm-sensors"
+      }
+    ]
+}

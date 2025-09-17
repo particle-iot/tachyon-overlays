@@ -1,0 +1,34 @@
+{
+  "name": "add-gpio-tools",
+  "description": "Adds in the gpio tools",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/gpio.sh",
+      "destination": "/usr/bin/gpio.sh",
+      "permissions": "755"
+    },
+    //add in an alias "echo "alias gpio='/usr/bin/gpio.sh'" >> ~/.bashrc" for root
+    {
+      "type": "chroot-cmd",
+      "cmd": "echo \"alias gpio='/usr/bin/gpio.sh'\" >> /root/.bashrc"
+    },
+    // Create gpio group for use in udev rules
+    {
+      "type": "chroot-cmd",
+      "cmd": "getent group gpio || groupadd gpio"
+    },
+    // Copy gpio group and device rules to udev rules
+    {
+      "type": "copy-into-chroot",
+      "source": "files/60-gpio.rules",
+      "destination": "/etc/udev/rules.d/60-gpio.rules",
+      "permissions": "644"
+    },
+    // Install libgpio
+    {
+      "type": "chroot-cmd",
+      "cmd": "apt install gpiod"
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "name": "add-desktop-setup",
+  "description": "Adds in desktop tweaks welcome app and desktop tweaks for Particle",
+  "commands": [
+    {
+      "type": "chroot-install-package",
+      "package": "particle-tachyon-desktop-setup"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/skel/.config/autostart/"
+    },
+    //etc/xdg/autostart/
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/xdg/autostart/"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/autostart",
+      "destination": "/etc/xdg/autostart/particle-desktop-setup.desktop",
+      "permissions": "644"
+    },
+    //etc/skel/.config/autostart/
+    {
+      "type": "copy-into-chroot",
+      "source": "files/autostart",
+      "destination": "/etc/skel/.config/autostart/particle-desktop-setup.desktop",
+      "permissions": "644"
+    },
+    //Backgrounds
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /usr/share/backgrounds"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/tachyon.jpg",
+      "destination": "/usr/share/backgrounds/tachyon.jpg",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/dconf/db/local.d"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/skel/.config/dconf"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/desktop-config",
+      "destination": "/etc/skel/.config/dconf/user",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/00-custom-settings",
+      "destination": "/etc/dconf/db/local.d/00-custom-settings",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "gsettings set org.gnome.desktop.background picture-uri file:\\/\\/usr\\/share\\/backgrounds\\/tachyon.jpg"
+    }, 
+    //permissions
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/dconf/profile"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/user",
+      "destination": "/etc/dconf/profile/user",
+      "permissions": "644"
+    },
+    //final update
+    {
+      "type": "chroot-cmd",
+      "cmd": "dconf update"
+    }
+  ]
+}

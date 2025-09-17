@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# Copyright (c) 2019 Qualcomm Technologies, Inc.
+# All Rights Reserved.
+# Confidential and Proprietary - Qualcomm Technologies, Inc.
+
+#Environment variables
+#SWAP_MEMTOTAL_PCT:
+#Swap size, expressed in terms of total system memory
+#SWAP_MIN_SIZE:
+#Smallest amount of swap in bytes
+  
+case "$1" in
+  start)
+    factor=${SWAP_MEMTOTAL_PCT:-50}
+    default_min_size=$((3*1024*1024*1024))
+    min_size=${SWAP_MIN_SIZE:-$default_min_size}
+    
+    memtotal=$(grep "^MemTotal:" /proc/meminfo | sed -n 's/[^0-9]*//gp')
+    mem_for_disksize=$(($memtotal*$factor/100*1024))
+    final_disksize=$(( $mem_for_disksize > $min_size ? $mem_for_disksize : $min_size ))
+    
+    echo 1 > /sys/block/zram0/reset
+    echo $final_disksize > /sys/block/zram0/disksize
+    # Usage of mem_limited is currently disabled.
+    # echo 50M > /sys/block/zram$i/mem_limit
+    mkswap /dev/zram0
+    swapon -p 10 /dev/zram0
+  ;;
+
+  stop)
+    if [ "$(grep "^/dev/zram0" /proc/swaps)" != "" ]; then
+       swapoff /dev/zram0
+    fi
+  ;;
+esac
+
+exit 0

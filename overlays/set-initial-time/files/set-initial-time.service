@@ -1,0 +1,12 @@
+[Unit]
+Description=Set initial time
+DefaultDependencies=no
+Before=systemd-tmpfiles-setup.service time-sync.target
+RequiresMountsFor=/dev/disk/by-partlabel/misc
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/set-initial-time.py
+
+[Install]
+WantedBy=sysinit.target

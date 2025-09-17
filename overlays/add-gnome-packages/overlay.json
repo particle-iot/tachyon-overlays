@@ -1,0 +1,108 @@
+{
+  "name": "add-gnome-packages",
+  "description": "Adds in packages for gnome",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "add-packages.sh"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/skel/.config/autostart"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/fixup_displays.desktop",
+      "destination": "/etc/skel/.config/autostart/fixup_displays.desktop",
+      "permissions": "644"
+    },
+    //Disable to stop it altering the login home screen resolution.
+    // {
+    //   "type": "copy-into-chroot",
+    //   "source": "files/fixup_displays.desktop",
+    //   "destination": "/usr/share/gdm/greeter/autostart/fixup_displays.desktop",
+    //   "permissions": "644"
+    // },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /home/particle/.config/autostart"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "chown -R particle:particle /home/particle/.config"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "chown -R particle:particle /home/particle/.config/autostart"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/fixup_displays.desktop",
+      "destination": "/home/particle/.config/autostart/fixup_displays.desktop",
+      "permissions": "644"
+    },    
+    {
+      "type": "copy-into-chroot",
+      "source": "files/fixup_displays",
+      "destination": "/usr/local/bin/fixup_displays",
+      "permissions": "755"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "chmod +x /usr/local/bin/fixup_displays"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/gdm3.service",
+      "destination": "/tmp/gdm3.service",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "cat /tmp/gdm3.service >> /lib/systemd/system/gdm3.service"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl set-default graphical.target"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl enable gdm3.service"
+    },
+    //delete all sessions that are not the ubuntu weston
+    {
+      "type": "chroot-rm",
+      "destination": "/usr/share/xsessions/gnome*"
+    },
+    {
+      "type": "chroot-rm",
+      "destination": "/usr/share/xsessions/gnome-classic.desktop"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "dpkg-divert --add --rename --divert /usr/share/xsessions/gnome-classic.desktop.disabled /usr/share/xsessions/gnome-classic.desktop"
+    },
+    {
+      "type": "chroot-rm",
+      "destination": "/usr/share/xsessions/ubuntu.desktop"
+    },
+    {
+      "type": "chroot-rm",
+      "destination": "/usr/share/wayland-sessions/gnome.desktop"
+    },
+    {
+      "type": "chroot-rm",
+      "destination": "/usr/share/wayland-sessions/weston.desktop"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/reset-display-session.sh",
+      "destination": "/usr/bin/reset-display-session.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "chmod +x /usr/bin/reset-display-session.sh"
+    }
+  ]
+}

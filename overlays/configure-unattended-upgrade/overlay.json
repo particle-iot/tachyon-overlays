@@ -1,0 +1,12 @@
+{
+  "name": "configure-unattended-upgrade",
+  "description": "Configure unattended-upgrade to upgrade Particle apt packages daily",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/51unattended-upgrades-particle",
+      "destination": "/etc/apt/apt.conf.d/51unattended-upgrades-particle",
+      "permissions": "644"
+    }
+  ]
+}

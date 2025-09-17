@@ -1,0 +1,360 @@
+{
+  "name": "manufacturing",
+  "description": "Add tools used by LabView during manufacturing",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /opt/particle/tests"
+    },
+    {
+      "type": "chroot-script",
+      "script": "install-mfg-tools.sh"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-bluetooth-mac.sh",
+      "destination": "/opt/particle/tests/read-bluetooth-mac.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-device-id.sh",
+      "destination": "/opt/particle/tests/read-device-id.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-distro-versions.sh",
+      "destination": "/opt/particle/tests/read-distro-versions.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-imei-1.sh",
+      "destination": "/opt/particle/tests/read-imei-1.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-imei-2.sh",
+      "destination": "/opt/particle/tests/read-imei-2.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-region.sh",
+      "destination": "/opt/particle/tests/read-region.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-storage.sh",
+      "destination": "/opt/particle/tests/read-storage.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-modem-firmware.sh",
+      "destination": "/opt/particle/tests/read-modem-firmware.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-modem-manufacturer.sh",
+      "destination": "/opt/particle/tests/read-modem-manufacturer.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-modem-model.sh",
+      "destination": "/opt/particle/tests/read-modem-model.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-modem-serial.sh",
+      "destination": "/opt/particle/tests/read-modem-serial.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-memory.sh",
+      "destination": "/opt/particle/tests/read-memory.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-wifi-mac.sh",
+      "destination": "/opt/particle/tests/read-wifi-mac.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/send-at-command.sh",
+      "destination": "/opt/particle/tests/send-at-command.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-eid.sh",
+      "destination": "/opt/particle/tests/read-eid.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/setup-wifi.sh",
+      "destination": "/opt/particle/tests/setup-wifi.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/teardown-wifi.sh",
+      "destination": "/opt/particle/tests/teardown-wifi.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-fs-resize.sh",
+      "destination": "/opt/particle/tests/test-fs-resize.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-gnss.sh",
+      "destination": "/opt/particle/tests/test-gnss.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/control-gpio.sh",
+      "destination": "/opt/particle/tests/control-gpio.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-act-sensor.sh",
+      "destination": "/opt/particle/tests/read-act-sensor.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-rgb-sensor.sh",
+      "destination": "/opt/particle/tests/read-rgb-sensor.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-40pin.sh",
+      "destination": "/opt/particle/tests/test-40pin.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-test-board",
+      "destination": "/opt/particle/tests/read-test-board",
+      "permissions": "755"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-test-board.c",
+      "destination": "/opt/particle/tests/read-test-board.c",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-audio-in.sh",
+      "destination": "/opt/particle/tests/test-audio-in.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-audio-out.sh",
+      "destination": "/opt/particle/tests/test-audio-out.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-audio-hdmi.sh",
+      "destination": "/opt/particle/tests/test-audio-hdmi.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-dsicsi-sw.sh",
+      "destination": "/opt/particle/tests/test-dsicsi-sw.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-dsi.sh",
+      "destination": "/opt/particle/tests/test-dsi.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/tachyon.jpg",
+      "destination": "/opt/particle/tests/tachyon.jpg",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-csi1.sh",
+      "destination": "/opt/particle/tests/test-csi1.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/qr",
+      "destination": "/opt/particle/tests/qr",
+      "permissions": "755"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-csi1-check.sh",
+      "destination": "/opt/particle/tests/test-csi1-check.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-csi2.sh",
+      "destination": "/opt/particle/tests/test-csi2.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-csi2-check.sh",
+      "destination": "/opt/particle/tests/test-csi2-check.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-tp.sh",
+      "destination": "/opt/particle/tests/test-tp.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/tp",
+      "destination": "/opt/particle/tests/tp",
+      "permissions": "755"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/read-rtc.sh",
+      "destination": "/opt/particle/tests/read-rtc.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-rtc.sh",
+      "destination": "/opt/particle/tests/test-rtc.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-dp-hdmi.sh",
+      "destination": "/opt/particle/tests/test-dp-hdmi.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-sd.sh",
+      "destination": "/opt/particle/tests/test-sd.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-pcie.sh",
+      "destination": "/opt/particle/tests/test-pcie.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-audio-plug.sh",
+      "destination": "/opt/particle/tests/test-audio-plug.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-audio-unplug.sh",
+      "destination": "/opt/particle/tests/test-audio-unplug.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/audio-detect",
+      "destination": "/opt/particle/tests/audio-detect",
+      "permissions": "755"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-usb-power.sh",
+      "destination": "/opt/particle/tests/test-usb-power.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-5v-input.sh",
+      "destination": "/opt/particle/tests/test-5v-input.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/1khz_0db_10s.wav",
+      "destination": "/opt/particle/tests/1khz_0db_10s.wav",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/1khz_l_10s.wav",
+      "destination": "/opt/particle/tests/1khz_l_10s.wav",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/1khz_r_10s.wav",
+      "destination": "/opt/particle/tests/1khz_r_10s.wav",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/gnss-log-helper.js",
+      "destination": "/opt/particle/tests/gnss-log-helper.js",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/iperf3",
+      "destination": "/opt/particle/tests/iperf3",
+      "permissions": "755"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/test-wifi.sh",
+      "destination": "/opt/particle/tests/test-wifi.sh",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/wpa_24g.conf",
+      "destination": "/opt/particle/tests/wpa_24g.conf",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/wpa_5g.conf",
+      "destination": "/opt/particle/tests/wpa_5g.conf",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/wpa_6g.conf",
+      "destination": "/opt/particle/tests/wpa_6g.conf",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "chmod +x /opt/particle/tests/*.sh"
+    }
+  ]
+}

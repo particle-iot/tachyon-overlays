@@ -1,0 +1,10 @@
+{
+  "name": "particle-tachyon-deb",
+  "description": "Adds the Particle Tachyon Debian metapackage which installs particle-tachyon-ril, particle-tachyon-syscon and particle-linux.",
+  "commands": [
+    {
+      "type": "chroot-install-package",
+      "package": "particle-tachyon"
+    }
+  ]
+}

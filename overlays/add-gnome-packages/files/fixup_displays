@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+
+import os
+import dbus
+import sys
+import time
+from pprint import pformat, pprint
+from collections import OrderedDict
+from pathlib import Path
+
+# === Step 1: Run-once logic ===
+flag_file = Path.home() / ".config" / ".fixup_displays_done"
+if flag_file.exists():
+    print("fixup_displays has already run for this user; skipping.")
+    sys.exit(0)
+
+# === Step 2: Ensure we’re in a GUI session ===
+if "DISPLAY" not in os.environ:
+    print("No DISPLAY environment variable; skipping display fixup.")
+    sys.exit(0)
+
+# === Step 3: Wait for Mutter's DisplayConfig DBus service ===
+BUS_NAME = 'org.gnome.Mutter.DisplayConfig'
+RETRIES = 10
+WAIT = 1  # seconds
+
+for attempt in range(RETRIES):
+    try:
+        bus = dbus.SessionBus()
+        bus.get_name_owner(BUS_NAME)
+        break
+    except dbus.exceptions.DBusException:
+        time.sleep(WAIT)
+else:
+    print(f"Failed to connect to {BUS_NAME} after {RETRIES} attempts")
+    sys.exit(1)
+
+# === Step 4: Begin original logic ===
+
+MONITORS_XML = Path.home() / '.config' / 'monitors.xml'
+
+INTERFACE = 'org.gnome.Mutter.DisplayConfig'
+PATH = '/' + INTERFACE.replace('.', '/')
+
+proxy = bus.get_object(INTERFACE, PATH)
+interface = dbus.Interface(proxy, dbus_interface=INTERFACE)
+
+state = interface.GetCurrentState()
+
+class Mode(OrderedDict):
+    def __init__(self, c):
+        self['id'] = c[0]
+        self['width'] = c[1]
+        self['height'] = c[2]
+        self['refresh'] = c[3]
+        self['pref_scale'] = c[4]
+        self['supported_scales'] = c[5]
+        self['properties'] = c[6]
+
+    def to_tuple(self):
+        return (self['connector'], self['id'], self['properties'])
+
+class Monitor(OrderedDict):
+    def __init__(self, m):
+        self['connector'] = m[0][0]
+        self['vendor'] = m[0][1]
+        self['product'] = m[0][2]
+        self['serial'] = m[0][3]
+        self['modes'] = [Mode(x) for x in m[1]]
+        self['properties'] = m[2]
+
+class LogicalMonitor(OrderedDict):
+    def __init__(self, monitors, m):
+        self['x'] = m[0]
+        self['y'] = m[1]
+        self['scale'] = m[2]
+        self['transform'] = m[3]
+        self['primary'] = m[4]
+        self['monitors'] = [list(filter(lambda x: x['connector'] == monitor[0], monitors))[0] for monitor in m[5]]
+        self['properties'] = m[6]
+
+    def to_tuple(self):
+        return (self['x'], self['y'], self['scale'], self['transform'], self['primary'], [x.to_tuple() for x in self['current']])
+
+class State(OrderedDict):
+    def __init__(self, s):
+        self['serial'] = s[0]
+        self['monitors'] = [Monitor(x) for x in s[1]]
+        self['logical_monitors'] = [LogicalMonitor(self['monitors'], x) for x in s[2]]
+        self['propreties'] = s[3]
+
+state = State(state)
+
+def clamp_and_primary(name, width, freq):
+    need_update = False
+    for logical in state['logical_monitors']:
+        for monitor in logical['monitors']:
+            if monitor['connector'] == name:
+                if logical['primary'] != True:
+                    need_update = True
+                    logical['primary'] = True
+                for mode in monitor['modes']:
+                    if 'is-current' in mode['properties'] and mode['properties']['is-current']:
+                        if mode['width'] > width:
+                            need_update = True
+                            mode['properties']['is-current'] = False
+                if need_update:
+                    best_mode = None
+                    closest_diff = float('inf')
+                    for mode in monitor['modes']:
+                        if mode['width'] == width and mode['refresh'] <= freq:
+                            diff = abs(mode['refresh'] - freq)
+                            if diff < closest_diff:
+                                closest_diff = diff
+                                best_mode = mode
+                    if best_mode:
+                        best_mode['properties']['is-current'] = True
+    for logical in state['logical_monitors']:
+        logical['width'] = 0
+        logical['current'] = []
+        logical['x'] = 0
+        logical['y'] = 0
+        logical['scale'] = 1.0  # <-- Force 100% scaling
+        for monitor in logical['monitors']:
+            if monitor['connector'] != name and need_update:
+                logical['primary'] = False
+            for mode in monitor['modes']:
+                if 'is-current' in mode['properties'] and mode['properties']['is-current']:
+                    logical['width'] = mode['width']
+                    mode['connector'] = monitor['connector']
+                    logical['current'] = [mode,]
+    return need_update
+
+def rearrange():
+    x = 0
+    state['logical_monitors'] = sorted(state['logical_monitors'], key=lambda x: x['primary'], reverse=True)
+    for logical in state['logical_monitors']:
+        logical['x'] = x
+        x += logical['width']
+
+# Skip if GNOME has already saved a config
+if MONITORS_XML.is_file():
+    print('skipping fixup because there is monitors.xml')
+    sys.exit(0)
+
+# Try to clamp the resolution of DP-1 to 1920 @ 60Hz and make it primary
+if clamp_and_primary('DP-1', 1920, 60):
+    rearrange()
+    interface.ApplyMonitorsConfig(state['serial'], 1, [x.to_tuple() for x in state['logical_monitors']], {})
+
+sys.exit(0)

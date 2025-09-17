@@ -1,0 +1,26 @@
+{
+    "name": "add-network-manager-policy",
+    "description": "Adds in polkit policies for NetworkManager management by regular users",
+    "commands": [
+      {
+        "type": "chroot-cmd",
+        "cmd": "apt update -y && apt install -y polkitd-pkla policykit-desktop-privileges"
+      },
+      {
+        "type": "chroot-cmd",
+        "cmd": "mkdir -p /etc/polkit-1/localauthority/90-mandatory.d"
+      },
+      // For some reason PermissionError: [Errno 13] Permission denied: '/mnt/tachyon/etc/polkit-1/localauthority/90-mandatory.d'
+      // if copied directly
+      {
+        "type": "copy-into-chroot",
+        "source": "files/99-network.pkla",
+        "destination": "/tmp/99-network.pkla",
+        "permissions": "644"
+      },
+      {
+        "type": "chroot-cmd",
+        "cmd": "cp /tmp/99-network.pkla /etc/polkit-1/localauthority/90-mandatory.d/ && rm /tmp/99-network.pkla"
+      }
+    ]
+}

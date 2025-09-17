@@ -1,0 +1,10 @@
+{
+  "name": "root-passwd",
+  "description": "Sets the root password",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "set-root-password.sh"
+    }
+  ]
+}

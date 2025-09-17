@@ -1,0 +1,3 @@
+SUBSYSTEM=="power_supply", ATTR{status}=="Full", RUN+="/usr/bin/led_battery_status.sh 1"
+SUBSYSTEM=="power_supply", ATTR{status}=="Charging", RUN+="/usr/bin/led_battery_status.sh 1"
+SUBSYSTEM=="power_supply", ATTR{status}=="Discharging", RUN+="/usr/bin/led_battery_status.sh 0"

@@ -1,0 +1,11 @@
+{
+  "name": "remove-unnecessary-packages",
+  "description": "Remove apt packages that are not needed on the Tachyon.",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "apt-get remove -y libc6-dev-arm64-cross libmnl0 libnfnetlink0 mesa-vulkan-drivers"
+    }
+  ]
+}
+

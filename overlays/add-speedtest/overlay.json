@@ -1,0 +1,10 @@
+{
+  "name": "add-speedtest",
+  "description": "Add speedtest-cli to the image",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "install-speedtest.sh"
+    }
+  ]
+}

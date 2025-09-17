@@ -1,0 +1,18 @@
+{
+  "name": "set-date-time-to-la",
+  "description": "Sets the date and time to Los Angeles",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "echo \"America/Los_Angeles\" | sudo tee /mnt/tachyon/etc/timezone"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "ln -sf /usr/share/zoneinfo/America/Los_Angeles /mnt/tachyon/etc/localtime"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "dpkg-reconfigure -f noninteractive tzdata"
+    }
+  ]
+}

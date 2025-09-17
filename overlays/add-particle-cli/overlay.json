@@ -1,0 +1,11 @@
+{
+  "name": "add-particle-cli",
+  "description": "Add particle-cli to the root and particle users",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "install-particle-cli.sh"
+    }
+  ]
+}
+

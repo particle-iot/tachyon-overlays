@@ -1,0 +1,29 @@
+{
+  "name": "test-overlay",
+  "description": "A test overlay to validate all supported features of the Tachyon Overlay Manager.",
+  "commands": [
+    {
+      "type": "local",
+      "script": "local-setup.sh"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/",
+      "destination": "/tmp/test-overlay/",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-from-chroot",
+      "source": "/tmp/test-overlay/chroot-copy-back.txt",
+      "destination": "temp-files/chroot-copy-back.txt"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "echo 'Hello from chroot!' > /tmp/test-overlay/chroot-log.txt"
+    },
+    {
+      "type": "chroot-script",
+      "script": "chroot-setup.sh"
+    }
+  ]
+}

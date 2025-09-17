@@ -1,0 +1,16 @@
+{
+  "name": "add-network-manager",
+  "description": "Adds in packages for NetworkManager",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "add-packages.sh"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/01-network-manager-all.yaml",
+      "destination": "/etc/netplan/01-network-manager-all.yaml",
+      "permissions": "644"
+    }
+  ]
+}

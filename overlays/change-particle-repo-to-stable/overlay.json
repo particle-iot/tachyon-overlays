@@ -1,0 +1,13 @@
+{
+  "name": "change-particle-repo-to-stable",
+  "description": "Changes the Particle debian repository to point to stable versions only.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/particle.list",
+      "destination": "/etc/apt/sources.list.d/particle.list",
+      "permissions": "644"
+    }
+  ]
+}
+

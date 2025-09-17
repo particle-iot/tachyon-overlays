@@ -1,0 +1,34 @@
+//This file supports comments - they are stripped out before the JSON file is parsed
+{
+  "name": "ubuntu-headless-20.04",
+  "description": "Sets up the headless build",
+  "steps": [
+    //NOTE:
+    // pre-overlay-setup has to be first in the list of overlay comments.
+    // This basically updates the chroot network configuration to use the host's network configuration.
+    // This is required for the apt-get update to work and we remove it at the end of the process
+    {
+      "type": "overlay",
+      "name": "pre-overlay-setup"
+    },
+    {
+      "type": "stack",
+      "name": "ubuntu-common-20.04"
+    },
+    {
+      "type": "overlay",
+      "name": "change-particle-repo-to-stable"
+    },
+    {
+      "type": "overlay",
+      "name": "pin-pkg-versions-cleanup"
+    },
+    //NOTE:
+    // post-overlay-cleanup has to be last in the list of overlay comments.
+    // This basically restores the chroot network configuration to use the original ubuntu release network configuration.
+    {
+      "type": "overlay",
+      "name": "post-overlay-cleanup"
+    }
+  ]
+}

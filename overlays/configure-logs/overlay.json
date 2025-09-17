@@ -1,0 +1,22 @@
+{
+  "name": "configure-logs",
+  "description": "Configure system log retention",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/journald.conf",
+      "destination": "/etc/systemd/journald.conf",
+      "permissions": "644"
+    },
+    // Quiet lines like Started Serial Getty on hvc0 in journalctl -u init.scope
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl mask serial-getty@hvc0.service"
+    },
+    // Disable legacy rsyslog
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl disable --now rsyslog.service"
+    }
+  ]
+}

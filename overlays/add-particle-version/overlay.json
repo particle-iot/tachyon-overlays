@@ -1,0 +1,16 @@
+{
+  "name": "add-particle-version",
+  "description": "Copy in the version file for this build",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/particle"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "$RESOURCES/particle/distro_versions.json",
+      "destination": "/etc/particle/distro_versions.json",
+      "permissions": "644"
+    }
+  ]
+}

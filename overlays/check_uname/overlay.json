@@ -1,0 +1,10 @@
+{
+  "name": "check-uname-arch",
+  "description": "Checks if the system architecture is arm64.",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "check-uname.sh"
+    }
+  ]
+}

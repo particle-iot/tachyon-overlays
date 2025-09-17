@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Fixup Displays
+Exec=/usr/local/bin/fixup_displays
+X-GNOME-Autostart-enabled=true
+X-GNOME-Autostart-Phase=Application
+NoDisplay=true

@@ -1,0 +1,10 @@
+{
+  "name": "remove-dhcpcd",
+  "description": "Remove dhcpcd from the system",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "rm -f /etc/systemd/system/multi-user.target.wants/dhcpcd.service || true"
+    }
+  ]
+}

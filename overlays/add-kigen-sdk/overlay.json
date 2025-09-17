@@ -1,0 +1,16 @@
+{
+  "name": "add-kigen-sdk",
+  "description": "Adds in the lpa app to the build",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "$RESOURCES/lpa-linux-arm64",
+      "destination": "/usr/bin/lpa",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "chmod +x /usr/bin/lpa"
+    }
+  ]
+}

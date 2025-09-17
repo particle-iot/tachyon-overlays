@@ -1,0 +1,47 @@
+//This file supports comments - they are stripped out before the JSON file is parsed
+{
+  "name": "ubuntu-desktop-common-20.04",
+  "description": "Sets up the desktop common images.",
+  "steps": [
+    //Note - must be first!
+    //Main common set of packages
+    {
+      "type": "stack",
+      "name": "ubuntu-common-20.04"
+    },
+    {
+      "type": "overlay",
+      "name": "add-gnome-packages"
+    },
+    {
+      "type": "overlay",
+      "name": "add-gnome-tweaks"
+    },
+    {
+      "type": "overlay",
+      "name": "add-desktop-setup"
+    },
+    //Desktop customizations etc...
+    //These can't be per user as particle user was already created
+    {
+      "type": "overlay",
+      "name": "add-vscode"
+    },
+    {
+      "type": "overlay",
+      "name": "add-chromium"
+    },
+    {
+      "type": "overlay",
+      "name": "add-camera-support"
+    },
+    {
+      "type": "overlay",
+      "name": "change-particle-repo-to-stable"
+    },
+    {
+      "type": "overlay",
+      "name": "pin-pkg-versions-cleanup"
+    }
+  ]
+}

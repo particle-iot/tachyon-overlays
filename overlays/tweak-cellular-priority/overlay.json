@@ -1,0 +1,10 @@
+{
+  "name": "tweak-cellular-priority",
+  "description": "Change the metric of the cellular interface rmnet_data0 to be higher than Wi-Fi wlan0",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "cellular-priority.py"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+[Unit]
+Description=Attach Bluetooth HCI UART
+After=dev-ttyHS0.device
+Requires=dev-ttyHS0.device
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/hciattach /dev/ttyHS0 qca -t 120 3000000 flow
+RemainAfterExit=yes
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

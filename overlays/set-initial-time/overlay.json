@@ -1,0 +1,26 @@
+{
+  "name": "set-initial-time",
+  "description": "Adds a service that sets the time on first boot.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/set-initial-time.service",
+      "destination": "/etc/systemd/system/set-initial-time.service",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/set-initial-time.py",
+      "destination": "/usr/local/bin/set-initial-time.py",
+      "permissions": "755"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/systemd/system/sysinit.target.wants/"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "ln -s /etc/systemd/system/set-initial-time.service /etc/systemd/system/sysinit.target.wants/set-initial-time.service || true"
+    }
+  ]
+}

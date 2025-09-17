@@ -1,0 +1,10 @@
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+
+Package: bluez
+Version: 5.56
+Provides: bluez
+Depends: bluez5 (>= 5.56)
+Description: Dummy package to satisfy bluez dependency
+ This is a workaround to satisfy dependencies on bluez

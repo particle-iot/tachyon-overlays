@@ -1,0 +1,4 @@
+Acquire::http::Proxy "http://proxy-mirror.tachyon-build.spark.li:3128";
+Acquire::https::Proxy "DIRECT";
+Acquire::Retries "3";
+Acquire::http::No-Cache "true";

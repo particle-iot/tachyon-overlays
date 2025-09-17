@@ -1,0 +1,31 @@
+{
+  "name": "post-overlay-cleanup",
+  "description": "Restore /etc/resolv.conf to /etc/resolv.conf -> ../run/systemd/resolve/stub-resolv.conf",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "rm /etc/resolv.conf",
+      "ignore-errors": true
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "ln -s ../run/systemd/resolve/stub-resolv.conf /etc/resolv.conf"
+    },
+    {
+      "type": "chroot-rm",
+      "destination": "/etc/apt/apt.conf.d/90noconfirm"
+    },
+    {
+      "type": "chroot-rm",
+      "destination": "/etc/apt/apt.conf.d/95proxies"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "sed -i '/Frontend: Noninteractive/d' /etc/debconf.conf"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "sed -i '/# tachyon-overlay-host$/d' /etc/hosts"
+    }
+  ]
+}

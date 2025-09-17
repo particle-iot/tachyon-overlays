@@ -1,0 +1,14 @@
+[Unit]
+Description=Particle startup
+After=network.target
+Before=sleep.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/particle-service.sh
+ExecStartPost=/usr/bin/particle-service.sh pre
+ExecStopPost=/usr/bin/particle-service.sh post
+
+[Install]
+WantedBy=multi-user.target
+WantedBy=sleep.target

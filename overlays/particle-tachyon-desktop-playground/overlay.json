@@ -1,0 +1,21 @@
+{
+  "name": "particle-tachyon-desktop-playground",
+  "description": "Configure the desktop welcome app to playground mode.",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /home/particle/.particle"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/welcome.json",
+      "destination": "/home/particle/.particle/welcome.json",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "chown -R particle:particle /home/particle/.particle"
+    }
+  ]
+}
+

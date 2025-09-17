@@ -1,0 +1,29 @@
+{
+  "name": "extract-syscon-bin",
+  "description": "Extract tachyon_syscon.bin/.hex installed by particle-tachyon-syscon so it can be included in the zip file",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "extract-syscon.sh"
+    },
+    {
+      "type": "copy-from-chroot",
+      "source": "/tmp/tachyon_syscon_version.txt",
+      "destination": "$RESOURCES/syscon/tachyon_syscon_version.txt"
+    },    
+    {
+      "type": "copy-from-chroot",
+      "source": "/usr/lib/firmware/tachyon_syscon.dvt.bin",
+      "destination": "$RESOURCES/syscon/tachyon_syscon.dvt.bin"
+    },
+    {
+      "type": "copy-from-chroot",
+      "source": "/usr/lib/firmware/tachyon_syscon.dvt.hex",
+      "destination": "$RESOURCES/syscon/tachyon_syscon.dvt.hex"
+    },
+    {
+      "type": "chroot-rm",
+      "destination": "/tmp/tachyon_syscon_version.txt"
+    }
+  ]
+}

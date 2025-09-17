@@ -1,0 +1,30 @@
+{
+  "name": "add-bluetooth-support",
+  "description": "Configures the bluetooth service.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/hciattach.service",
+      "destination": "/etc/systemd/system/hciattach.service",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "ln -s /etc/systemd/system/hciattach.service /etc/systemd/system/multi-user.target.wants/hciattach.service || true"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/bluez_5.56_all.deb",
+      "destination": "/tmp/bluez_5.56_all.deb",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-script",
+      "script": "add-packages.sh"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "ln -s /lib/systemd/system/bluetooth.service /etc/systemd/system/multi-user.target.wants/bluetooth.service || true"
+    }
+  ]
+}

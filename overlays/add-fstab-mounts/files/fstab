@@ -1,0 +1,2 @@
+PARTLABEL=modem_a /vendor vfat defaults,ro,x-initrd.mount
+PARTLABEL=bluetooth_a /bt_firmware vfat defaults,ro,x-initrd.mount

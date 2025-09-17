@@ -1,0 +1,2 @@
+deb [signed-by=/etc/apt/keyrings/particle-keyring.gpg] https://packages.particle.io/debian stable main
+deb [signed-by=/etc/apt/keyrings/particle-keyring.gpg] https://packages.particle.io/debian latest main

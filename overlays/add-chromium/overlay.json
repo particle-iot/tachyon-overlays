@@ -1,0 +1,14 @@
+{
+  "name": "add-chromium",
+  "description": "Adds in packages for chromium",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "add-apt-repository ppa:saiarcot895/chromium-beta -y"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "apt install chromium-browser -y"
+    }
+  ]  
+}

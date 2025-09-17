@@ -1,0 +1,30 @@
+{
+  "name": "growfs",
+  "description": "Adds and configures the growfs service.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/growfs.service",
+      "destination": "/etc/systemd/system/growfs.service",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/growfs.sh",
+      "destination": "/usr/bin/growfs.sh",
+      "permissions": "755"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/systemd/system/ffbm.target.wants /etc/systemd/system/multi-user.target.wants"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "ln -sfn /etc/systemd/system/growfs.service /etc/systemd/system/ffbm.target.wants/growfs.service || true"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "ln -sfn /etc/systemd/system/growfs.service /etc/systemd/system/multi-user.target.wants/growfs.service || true"
+    }
+  ]
+}

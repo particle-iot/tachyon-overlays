@@ -1,0 +1,19 @@
+{
+  "name": "add-led-battery-charging-rules",
+  "description": "Adds udev rule to set normally-on/off status of activity LED based on battery charge state.",
+  "commands": [
+    // Copy udev rules for power_supply battery events. Charging/Full = normally on, blink off. Discharging = normally off, blink on
+    {
+      "type": "copy-into-chroot",
+      "source": "files/99-battery.rules",
+      "destination": "/etc/udev/rules.d/99-battery.rules",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/led_battery_status.sh",
+      "destination": "/usr/bin/led_battery_status.sh",
+      "permissions": "755"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+[org/gnome/desktop/background]
+picture-uri='file:///usr/share/backgrounds/tachyon.jpg'
+
+[org/gnome/desktop/interface]
+show-battery-percentage=true
+
+[org/gnome/desktop/wm/preferences]
+button-layout='appmenu:minimize,maximize,close'

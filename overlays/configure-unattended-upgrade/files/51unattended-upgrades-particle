@@ -1,0 +1,7 @@
+// Upgrade Particle packages daily
+
+Unattended-Upgrade::Origins-Pattern {
+	"origin=Particle";
+};
+
+Unattended-Upgrade::Verbose "true";
