@@ -6,18 +6,10 @@
         "type": "chroot-cmd",
         "cmd": "apt update"
       },
-      // {
-      //   "type": "chroot-cmd",
-      //   "cmd": "apt install tachyon-firmware"
-      // },
-      // Seems that kernel already requires qupfwv3.elf and is automagically copied if present
-      // Still need to re-run update-initramfs after tachyon-firmware package installation
-      // {
-      //   "type": "copy-into-chroot",
-      //   "source": "files/copy_qup_fw",
-      //   "destination": "/etc/initramfs-tools/hooks/copy_qup_fw",
-      //   "permissions": "755"
-      // },
+      {
+        "type": "chroot-cmd",
+        "cmd": "apt install tachyon-firmware"
+      },
       {
         "type": "chroot-cmd",
         "cmd": "update-initramfs -k all -t -u"

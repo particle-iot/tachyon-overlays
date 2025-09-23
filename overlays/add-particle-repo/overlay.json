@@ -5,7 +5,7 @@
     {
       "type": "copy-into-chroot",
       "source": "files/particle.list",
-      "destination": "/etc/apt/sources.list.d/particle.list",
+      "destination": "/etc/apt/sources.list.d/particle-debian.list",
       "permissions": "644"
     },
     {

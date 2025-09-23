@@ -1,0 +1,11 @@
+{
+  "name": "add-adbd",
+  "description": "Enable ADB over USB",
+  "commands": [
+    // Note - requires ubuntu particle debian repo to be added prior
+    {
+      "type": "chroot-cmd",
+      "cmd": "apt install adbd"
+    }
+  ]
+}

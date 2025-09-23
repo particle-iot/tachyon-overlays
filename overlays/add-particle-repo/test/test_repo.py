@@ -1,5 +1,5 @@
 def test_repo_installed(host):
-    list_entry = host.file('/etc/apt/sources.list.d/particle.list')
+    list_entry = host.file('/etc/apt/sources.list.d/particle-debian.list')
     assert list_entry.exists
 
 def test_apt_key_added(host):

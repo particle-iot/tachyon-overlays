@@ -15,6 +15,14 @@
         "type": "stack",
         "name": "ubuntu-common-24.04"
       },
+      {
+        "type": "overlay",
+        "name": "change-particle-repo-to-stable"
+      },
+      {
+        "type": "overlay",
+        "name": "pin-pkg-versions-cleanup"
+      },      
       //NOTE:
       // post-overlay-cleanup has to be last in the list of overlay comments.
       // This basically restores the chroot network configuration to use the original ubuntu release network configuration.

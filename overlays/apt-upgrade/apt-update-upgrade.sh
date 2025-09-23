@@ -21,15 +21,24 @@ else
   exit 1
 fi
 
+#add in basic packages nano, curl, wget, git, less, unzip, zip
+if apt-get install -y nano xterm curl wget git less unzip zip sudo device-tree-compiler input-utils gpiod minicom htop i2c-tools dstat nvme-cli usbutils apt-utils inotify-tools pciutils sl neofetch cmake avahi-daemon software-properties-common flatpak equivs iputils-ping net-tools; then
+  echo "Basic packages installed successfully."
+else
+  echo "Error installing basic packages."
+  exit 1
+fi
+
+
 #add nodejs to the list of ppa packages
 curl -fsSL https://deb.nodesource.com/setup_22.x -o /tmp/nodesource_setup.sh
 bash /tmp/nodesource_setup.sh
 
-#add in basic packages nano, curl, wget, git, less, unzip, zip
-if apt-get install -y nano curl wget git less unzip zip sudo device-tree-compiler input-utils gpiod minicom htop i2c-tools dstat nvme-cli usbutils apt-utils inotify-tools pciutils sl neofetch cmake nodejs avahi-daemon software-properties-common flatpak equivs iputils-ping; then
-  echo "Basic packages installed successfully."
+# Install Node.js
+if apt-get install -y nodejs; then
+  echo "Node.js installed successfully."
 else
-  echo "Error installing basic packages."
+  echo "Error installing Node.js."
   exit 1
 fi
 

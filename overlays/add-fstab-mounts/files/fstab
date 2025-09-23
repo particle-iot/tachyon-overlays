@@ -1,2 +1,4 @@
-PARTLABEL=modem_a /vendor vfat defaults,ro,x-initrd.mount
-PARTLABEL=bluetooth_a /bt_firmware vfat defaults,ro,x-initrd.mount
+LABEL=desktop-rootfs   /            ext4  defaults,errors=remount-ro  0  1
+LABEL=UEFI             /boot/efi    vfat  umask=0077                  0  1
+PARTLABEL=modem_a      /vendor      vfat  defaults,ro,x-initrd.mount  0  0
+PARTLABEL=bluetooth_a  /bt_firmware vfat  defaults,ro,x-initrd.mount  0  0

@@ -1,0 +1,26 @@
+{
+  "name": "add-autologin-getty",
+  "description": "Enable root autologin on ttyMSM0 serial console",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/enable-serial-autologin.sh",
+      "destination": "/usr/local/sbin/enable-serial-autologin.sh",
+      "permissions": "755"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/serial-autologin-setup.service",
+      "destination": "/etc/systemd/system/serial-autologin-setup.service",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl daemon-reload"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl enable serial-autologin-setup.service"
+    }
+  ]
+}

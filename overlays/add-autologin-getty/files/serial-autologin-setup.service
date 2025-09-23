@@ -1,0 +1,13 @@
+[Unit]
+Description=Enable root autologin on ttyMSM0 getty
+DefaultDependencies=no
+After=local-fs.target systemd-remount-fs.service
+Before=getty.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/enable-serial-autologin.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -3,18 +3,118 @@
     "name": "ubuntu-common-24.04",
     "description": "Sets up the base system with required overlays and configurations.",
     "steps": [
-      // {
-      //   "type": "overlay",
-      //   "name": "pin-pkg-versions"
-      // },
+      {
+        "type": "overlay",
+        "name": "pin-pkg-versions"
+      },
       {
         "type": "overlay",
         "name": "add-particle-repo"
       },
       {
         "type": "overlay",
+        "name": "apt-upgrade"
+      },
+      {
+        "type": "overlay",
+        "name": "add-led-battery-charging-rules"
+      },
+      {
+        "type": "overlay",
+        "name": "root-passwd"
+      },
+      {
+        "type": "overlay",
+        "name": "add-root-ssh"
+      },
+      // {
+      //   "type": "overlay",
+      //   "name": "configure-logs"
+      // },
+      // {
+      //   "type": "overlay",
+      //   "name": "add-speedtest"
+      // },
+      {
+        "type": "overlay",
+        "name": "add-gpio-tools"
+      },
+      {
+        "type": "overlay",
+        "name": "particle-service"
+      },
+      {
+        "type": "overlay",
+        "name": "set-initial-time"
+      },
+      {
+        "type": "overlay",
+        "name": "particle-tachyon-deb"
+      },
+      {
+        "type": "overlay",
+        "name": "configure-unattended-upgrade"
+      },
+      {
+        "type": "overlay",
+        "name": "add-network-manager"
+      },
+      {
+        "type": "overlay",
+        "name": "add-tailscale"
+      },
+      {
+        "type": "overlay",
+        "name": "set-adb-env-vars"
+      },
+      // {
+      //   "type": "overlay",
+      //   "name": "remove-dhcpcd"
+      // },
+      // {
+      //   "type": "overlay",
+      //   "name": "remove-unnecessary-packages"
+      // },
+      {
+        "type": "overlay",
+        "name": "add-docker"
+      },
+      {
+        "type": "overlay",
+        "name": "add-perf-utils"
+      },
+      {
+        "type": "overlay",
+        "name": "add-particle-user"
+      },
+      // {
+      //   "type": "overlay",
+      //   "name": "add-autologin-getty"
+      // },      
+      // {
+      //   "type": "overlay",
+      //   "name": "add-particle-user-extra-groups"
+      // },
+      {
+        "type": "overlay",
+        "name": "add-particle-cli"
+      },
+      {
+        "type": "overlay",
+        "name": "minimum-swap"
+      },
+      {
+        "type": "overlay",
+        "name": "add-systemd-suspend-hooks"
+      },
+      {
+        "type": "overlay",
         "name": "add-tachyon-firmware-pkg"
       },
+      {
+        "type": "overlay",
+        "name": "add-adbd"
+      },      
       {
         "type": "overlay",
         "name": "add-fstab-mounts"
@@ -26,10 +126,6 @@
       {
         "type": "overlay",
         "name": "growfs"
-      },
-      {
-        "type": "overlay",
-        "name": "add-particle-user"
       },
       {
         "type": "overlay",

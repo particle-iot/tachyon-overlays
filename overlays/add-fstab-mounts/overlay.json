@@ -1,33 +1,9 @@
 {
-    "name": "add-fstab-mounts",
-    "description": "Adds default fstab mounts",
-    "commands": [
-      {
-        "type": "chroot-cmd",
-        "cmd": "mkdir -p /vendor"
-      },
-      {
-        "type": "chroot-cmd",
-        "cmd": "mkdir -p /bt_firmware"
-      },
-      {
-        "type": "copy-into-chroot",
-        "source": "files/fstab",
-        "destination": "/etc/fstab.ext",
-        "permissions": "644"
-      },
-      {
-        "type": "chroot-cmd",
-        "cmd": "cat /etc/fstab.ext >> /etc/fstab"
-      },
-      {
-        "type": "chroot-rm",
-        "destination": "/etc/fstab.ext"
-      },
-      // Must regenerate initrd because we are using x-initrd.mount options for some entries in fstab
-      {
-        "type": "chroot-cmd",
-        "cmd": "update-initramfs -k all -t -u"
-      }
-    ]
-  }
+  "name": "add-fstab-mounts",
+  "description": "Install full fstab and regen initramfs",
+  "commands": [
+    { "type": "chroot-cmd", "cmd": "mkdir -p /vendor /bt_firmware /boot/efi" },
+    { "type": "copy-into-chroot", "source": "files/fstab", "destination": "/etc/fstab", "permissions": "644" },
+    { "type": "chroot-cmd", "cmd": "update-initramfs -k all -t -u" }
+  ]
+}
