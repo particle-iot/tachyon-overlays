@@ -1,4 +1,4 @@
-LABEL=desktop-rootfs   /            ext4  defaults,errors=remount-ro  0  1
+LABEL=%ROOTFS_LABEL%   /            ext4  defaults,noatime,errors=remount-ro,commit=30  0  1
 LABEL=UEFI             /boot/efi    vfat  umask=0077                  0  1
-PARTLABEL=modem_a      /vendor      vfat  defaults,ro,x-initrd.mount  0  0
-PARTLABEL=bluetooth_a  /bt_firmware vfat  defaults,ro,x-initrd.mount  0  0
+PARTLABEL=modem_a      /vendor      vfat  defaults,ro,x-initrd.mount,x-systemd.automount  0  0
+PARTLABEL=bluetooth_a  /bt_firmware vfat  defaults,ro,x-initrd.mount,x-systemd.automount  0  0
