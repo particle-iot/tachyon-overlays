@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 LOG_FILE="/var/log/particle.log"
 LED_PATH="/sys/class/leds/green/brightness"
@@ -64,7 +64,7 @@ update_hostname() {
     CURRENT_HOSTNAME=$(hostname)
 
     # Only proceed if the current hostname is 'qcs6490'
-    if [[ "${CURRENT_HOSTNAME}" == *qcs6490* ]]; then
+    if [[ "$CURRENT_HOSTNAME" == *qcs6490* || "$CURRENT_HOSTNAME" == *localhost* ]]; then
         log_message "Updating hostname to '${MACHINE}'."
 
         # Update /etc/hostname
@@ -78,7 +78,7 @@ update_hostname() {
 
         log_message "Hostname updated to '${MACHINE}'."
     else
-        log_message "Hostname is not 'qcs6490'. No changes made."
+        log_message "Hostname is not 'qcs6490' or 'localhost'. No changes made."
     fi
 }
 
