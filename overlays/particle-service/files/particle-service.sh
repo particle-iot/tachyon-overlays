@@ -35,7 +35,14 @@ set_activity_light() {
 
 init_touchscreen() {
     # If the DSI screen is used, the touch screen i2c device can fail to probe on boot due to the order of device initialization and the shared reset pin between them.
-    I2C_NUMBER=$(ls /sys/devices/platform/soc/a94000.i2c/ | grep -o 'i2c-[0-9]\+' | sed 's/i2c-//')
+    # Locate the bus number from the i2c peripheral address
+    I2C_NUMBER=$(ls -l /sys/class/i2c-dev/ | grep 'a94000.i2c' | sed -n 's/.*i2c-\([0-9]\+\).*/\1/p')
+    echo "CSI/DSI I2C Bus number: $I2C_NUMBER"
+
+    if [ ! -e /sys/bus/i2c/drivers/fts_ts ]; then
+        echo "No FTS touch controller driver found, not probing touch screen."
+        return 1
+    fi
 
     if [ ! -e /sys/bus/i2c/drivers/fts_ts/${I2C_NUMBER}-0038 ]; then
         log_message "Attempting to probe touch screen controller on DSI i2c bus ${I2C_NUMBER}"
