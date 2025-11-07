@@ -3,7 +3,7 @@
 # GPIO control script with extended functionality
 # Commands: set, get, list, init, getall, help
 
-GPIO_BASE=336  # Offset for GPIO numbers
+GPIO_BASE=$(ls -la /sys/class/gpio | grep -E 'f[0-9a-f]+\.pinctrl' | sed -n 's/.*gpiochip\([0-9]\+\)$/\1/p')  # Offset for TLMM GPIO numbers
 
 # Define GPIO group mappings
 declare -A GPIO_GROUPS=(
