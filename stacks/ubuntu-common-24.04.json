@@ -138,6 +138,10 @@
       {
         "type": "overlay",
         "name": "add-linux-tools"
+      },
+      {
+        "type": "overlay",
+        "name": "add-msm-blacklist"
       }
     ]
   }
