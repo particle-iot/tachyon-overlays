@@ -1,0 +1,13 @@
+{
+    "name": "add-msm-blacklist",
+    "description": "Adds in msm_display driver blacklist to avoid conflict with msm",
+    "commands": [
+      {
+        "type": "copy-into-chroot",
+        "source": "files/msm.conf",
+        "destination": "/etc/modprobe.d/msm.conf",
+        "permissions": "644"
+      }
+    ]
+  }
+  
