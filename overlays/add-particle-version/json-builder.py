@@ -116,6 +116,11 @@ def main():
     tmp_path.replace(output_path)
 
     print(f"[json-builder] Wrote distro_versions.json to {output_path}")
+
+    # output the JSON content as a nicely formatted string
+    print("Generated metadata:")
+    print(json.dumps(metadata, indent=2, sort_keys=True))
+
     if metadata.get("distro"):
         print(f"  Distro: {metadata['distro'].get('distribution', '?')} {metadata['distro'].get('distribution_version', '?')} v{metadata['distro'].get('version', '?')}")
     if metadata.get("src"):
