@@ -3,18 +3,8 @@
   "description": "Generate and install the version file for this build from environment variables",
   "commands": [
     {
-      "type": "copy-into-chroot",
-      "source": "$OVERLAY_DIR/json-builder.py",
-      "destination": "/tmp/json-builder.py",
-      "permissions": "755"
-    },
-    {
-      "type": "chroot-cmd",
-      "cmd": "python3 /tmp/json-builder.py /etc/particle/distro_versions.json"
-    },
-    {
-      "type": "chroot-cmd",
-      "cmd": "rm -f /tmp/json-builder.py"
+      "type": "chroot-script",
+      "script": "json-builder.py"
     }
   ]
 }

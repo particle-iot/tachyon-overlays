@@ -27,19 +27,20 @@ DEFAULT_OUTPUT_PATH = Path("/etc/particle/distro_versions.json")
 
 def collect_distro_metadata():
     """
-    Collect DISTRO_* environment variables and build the distro section.
+    Collect PKG_DISTRO_* environment variables and build the distro section.
+    Note: PKG_ prefix is required by tachyon-overlay-tool to pass env vars into chroot.
     """
     distro = {}
 
     # Map env var names to JSON keys
     distro_vars = {
-        "DISTRO_VERSION": "version",
-        "DISTRO_STACK": "stack",
-        "DISTRO_VARIANT": "variant",
-        "DISTRO_REGION": "region",
-        "DISTRO_BOARD": "board",
-        "DISTRO_DISTRIBUTION": "distribution",
-        "DISTRO_DISTRIBUTION_VERSION": "distribution_version",
+        "PKG_DISTRO_VERSION": "version",
+        "PKG_DISTRO_STACK": "stack",
+        "PKG_DISTRO_VARIANT": "variant",
+        "PKG_DISTRO_REGION": "region",
+        "PKG_DISTRO_BOARD": "board",
+        "PKG_DISTRO_DISTRIBUTION": "distribution",
+        "PKG_DISTRO_DISTRIBUTION_VERSION": "distribution_version",
     }
 
     for env_key, json_key in distro_vars.items():
@@ -52,17 +53,18 @@ def collect_distro_metadata():
 
 def collect_source_metadata():
     """
-    Collect SRC_* environment variables and build the src section.
+    Collect PKG_SRC_* environment variables and build the src section.
+    Note: PKG_ prefix is required by tachyon-overlay-tool to pass env vars into chroot.
     """
     src = {}
 
     # Map env var names to JSON keys
     src_vars = {
-        "SRC_TACHYON_COMPOSER": "tachyon_composer",
-        "SRC_UBUNTU_20_04": "ubuntu_20_04",
-        "SRC_UBUNTU_24_04": "ubuntu_24_04",
-        "SRC_U_BOOT": "u_boot",
-        "SRC_OVERLAYS": "overlays",
+        "PKG_SRC_TACHYON_COMPOSER": "tachyon_composer",
+        "PKG_SRC_UBUNTU_20_04": "ubuntu_20_04",
+        "PKG_SRC_UBUNTU_24_04": "ubuntu_24_04",
+        "PKG_SRC_U_BOOT": "u_boot",
+        "PKG_SRC_OVERLAYS": "overlays",
     }
 
     for env_key, json_key in src_vars.items():
