@@ -43,10 +43,6 @@
       "type": "overlay",
       "name": "add-speedtest"
     },
-    // {
-    //   "type": "overlay",
-    //   "name": "add-particle-version"
-    // },
     {
       "type": "overlay",
       "name": "add-gpio-tools"
@@ -147,6 +143,10 @@
     {
       "type": "overlay",
       "name": "add-systemd-suspend-hooks"
+    },
+    {
+      "type": "overlay",
+      "name": "add-particle-version"
     }
   ]
 }
