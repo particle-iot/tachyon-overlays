@@ -103,7 +103,7 @@ def main():
     metadata = generate_version_metadata()
 
     if not metadata:
-        print("[json-builder] No DISTRO_* or SRC_* env vars found; creating empty metadata.", file=sys.stderr)
+        print("[json-builder] No PKG_DISTRO_* or PKG_SRC_* env vars found; creating empty metadata.", file=sys.stderr)
 
     # Ensure parent directory exists
     output_path.parent.mkdir(parents=True, exist_ok=True)
