@@ -113,6 +113,10 @@
       },
       {
         "type": "overlay",
+        "name": "fix-qcom-modem"
+      },
+      {
+        "type": "overlay",
         "name": "add-adbd"
       },      
       {

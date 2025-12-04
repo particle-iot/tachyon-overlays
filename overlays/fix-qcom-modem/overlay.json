@@ -1,0 +1,96 @@
+{
+  "name": "fix-qcom-modem",
+  "description": "Configures Qualcomm modem support with ModemManager, rmtfs, and partition setup",
+  "commands": [
+    // Create ModemManager filter config directory and install config
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/ModemManager/conf.d"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/99-tachyon-ignore-at.conf",
+      "destination": "/etc/ModemManager/conf.d/99-tachyon-ignore-at.conf",
+      "permissions": "644"
+    },
+
+    // Create modem mountpoints
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /persist /firmware"
+    },
+
+    // Add fstab entries for modem partitions (check for duplicates)
+    {
+      "type": "chroot-cmd",
+      "cmd": "grep -q '# Tachyon modem support' /etc/fstab || cat files/fstab-entries >> /etc/fstab",
+      "ignore-errors": true
+    },
+
+    // Set up /persist directory structure and permissions
+    {
+      "type": "chroot-cmd",
+      "cmd": "chmod 755 /persist"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /persist/rmts"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "chmod 755 /persist/rmts"
+    },
+
+    // Create modem partition symlinks in /persist/rmts
+    {
+      "type": "chroot-script",
+      "script": "create-modem-symlinks.sh"
+    },
+
+    // Install rmtfs if not already installed
+    {
+      "type": "chroot-cmd",
+      "cmd": "dpkg -s rmtfs >/dev/null 2>&1 || apt-get install -y rmtfs"
+    },
+
+    // Create systemd service override directories
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/systemd/system/ModemManager.service.d"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/systemd/system/rmtfs.service.d"
+    },
+
+    // Install systemd service overrides
+    {
+      "type": "copy-into-chroot",
+      "source": "files/ModemManager-override.conf",
+      "destination": "/etc/systemd/system/ModemManager.service.d/override.conf",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/rmtfs-override.conf",
+      "destination": "/etc/systemd/system/rmtfs.service.d/override.conf",
+      "permissions": "644"
+    },
+
+    // Reload systemd daemon to pick up overrides
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl daemon-reload"
+    },
+
+    // Enable services
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl enable ModemManager"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl enable rmtfs"
+    }
+  ]
+}
