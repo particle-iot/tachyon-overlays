@@ -1,0 +1,11 @@
+# 1) Mark rmnet_ipa0 as a ModemManager candidate for the qcom-soc plugin
+ACTION=="add|change", \
+  SUBSYSTEM=="net", \
+  NAME=="rmnet_ipa0", \
+  ENV{ID_MM_CANDIDATE}="1", \
+  ENV{ID_MM_QCOM_SOC}="1"
+
+# 2) Explicitly ignore the broken AT-style wwan ports
+ACTION=="add|change", \
+  KERNEL=="wwan0at*", \
+  ENV{ID_MM_PORT_IGNORE}="1"
