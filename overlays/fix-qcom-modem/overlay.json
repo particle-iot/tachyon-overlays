@@ -2,24 +2,10 @@
   "name": "fix-qcom-modem",
   "description": "Configures Qualcomm modem support with ModemManager, rmtfs, and partition setup",
   "commands": [
-    // Create ModemManager filter config directory and install config
+    // Install ModemManager and udev configs
     {
-      "type": "chroot-cmd",
-      "cmd": "mkdir -p /etc/ModemManager/conf.d"
-    },
-    {
-      "type": "copy-into-chroot",
-      "source": "files/99-tachyon-ignore-at.conf",
-      "destination": "/etc/ModemManager/conf.d/99-tachyon-ignore-at.conf",
-      "permissions": "644"
-    },
-
-    // Install udev rules for wwan interface
-    {
-      "type": "copy-into-chroot",
-      "source": "files/99-tachyon-wwan.rules",
-      "destination": "/etc/udev/rules.d/99-tachyon-wwan.rules",
-      "permissions": "644"
+      "type": "chroot-script",
+      "script": "install-configs.sh"
     },
 
     // Create modem mountpoints
