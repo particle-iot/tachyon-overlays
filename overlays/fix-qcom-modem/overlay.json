@@ -47,28 +47,10 @@
       "cmd": "dpkg -s rmtfs >/dev/null 2>&1 || apt-get install -y rmtfs"
     },
 
-    // Create systemd service override directories
-    {
-      "type": "chroot-cmd",
-      "cmd": "mkdir -p /etc/systemd/system/ModemManager.service.d"
-    },
-    {
-      "type": "chroot-cmd",
-      "cmd": "mkdir -p /etc/systemd/system/rmtfs.service.d"
-    },
-
     // Install systemd service overrides
     {
-      "type": "copy-into-chroot",
-      "source": "files/ModemManager-override.conf",
-      "destination": "/etc/systemd/system/ModemManager.service.d/override.conf",
-      "permissions": "644"
-    },
-    {
-      "type": "copy-into-chroot",
-      "source": "files/rmtfs-override.conf",
-      "destination": "/etc/systemd/system/rmtfs.service.d/override.conf",
-      "permissions": "644"
+      "type": "chroot-script",
+      "script": "install-systemd-overrides.sh"
     },
 
     // Reload systemd daemon to pick up overrides
