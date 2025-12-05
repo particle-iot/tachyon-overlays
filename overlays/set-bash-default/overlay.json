@@ -1,0 +1,47 @@
+{
+  "name": "set-bash-default",
+  "description": "Sets bash as the default shell for root and particle user",
+  "commands": [
+    // Add bash auto-switch to root's profile
+    {
+      "type": "chroot-cmd",
+      "cmd": "echo '' >> /root/.profile"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "echo '# Auto-switch to bash if available' >> /root/.profile"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "echo 'if [ -x /bin/bash ]; then exec /bin/bash; fi' >> /root/.profile"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "echo 'if [ -x /usr/bin/bash ]; then exec /usr/bin/bash; fi' >> /root/.profile"
+    },
+
+    // Add bash auto-switch to particle user's profile
+    {
+      "type": "chroot-cmd",
+      "cmd": "echo '' >> /home/particle/.profile"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "echo '# Auto-switch to bash if available' >> /home/particle/.profile"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "echo 'if [ -x /bin/bash ]; then exec /bin/bash; fi' >> /home/particle/.profile"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "echo 'if [ -x /usr/bin/bash ]; then exec /usr/bin/bash; fi' >> /home/particle/.profile"
+    },
+
+    // Ensure correct ownership for particle user's profile
+    {
+      "type": "chroot-cmd",
+      "cmd": "chown particle:particle /home/particle/.profile"
+    }
+  ]
+}
