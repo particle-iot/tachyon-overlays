@@ -14,11 +14,10 @@
       "cmd": "mkdir -p /persist /firmware"
     },
 
-    // Add fstab entries for modem partitions (check for duplicates)
+    // Add fstab entries for modem partitions
     {
-      "type": "chroot-cmd",
-      "cmd": "grep -q '# Tachyon modem support' /etc/fstab || cat files/fstab-entries >> /etc/fstab",
-      "ignore-errors": true
+      "type": "chroot-script",
+      "script": "setup-fstab.sh"
     },
 
     // Set up /persist directory structure and permissions
