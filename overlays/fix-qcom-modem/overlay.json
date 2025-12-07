@@ -20,6 +20,12 @@
       "script": "setup-fstab.sh"
     },
 
+    // Regenerate initramfs after fstab changes
+    {
+      "type": "chroot-cmd",
+      "cmd": "update-initramfs -k all -t -u"
+    },
+
     // Set up /persist directory structure and permissions
     {
       "type": "chroot-cmd",

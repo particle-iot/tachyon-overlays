@@ -149,6 +149,10 @@
       },
       {
         "type": "overlay",
+        "name": "add-v4l-utils"
+      },
+      {
+        "type": "overlay",
         "name": "add-msm-blacklist"
       },
       {
