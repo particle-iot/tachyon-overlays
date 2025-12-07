@@ -117,15 +117,15 @@
       },
       {
         "type": "overlay",
-        "name": "fix-qcom-modem"
+        "name": "add-adbd"
       },
       {
         "type": "overlay",
-        "name": "add-adbd"
-      },      
+        "name": "add-fstab-mounts"
+      },
       {
         "type": "overlay",
-        "name": "add-fstab-mounts"
+        "name": "fix-qcom-modem"
       },
       {
         "type": "overlay",

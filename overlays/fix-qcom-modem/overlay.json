@@ -14,7 +14,7 @@
       "cmd": "mkdir -p /persist /firmware"
     },
 
-    // Add fstab entries for modem partitions
+    // Add fstab entries for modem partitions (runs after add-fstab-mounts to append entries)
     {
       "type": "chroot-script",
       "script": "setup-fstab.sh"
