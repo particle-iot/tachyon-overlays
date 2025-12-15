@@ -87,10 +87,10 @@
         "type": "overlay",
         "name": "add-particle-user"
       },
-      {
-        "type": "overlay",
-        "name": "set-bash-default"
-      },
+      // {
+      //   "type": "overlay",
+      //   "name": "set-bash-default"
+      // },
       // {
       //   "type": "overlay",
       //   "name": "add-autologin-getty"
@@ -147,10 +147,10 @@
         "type": "overlay",
         "name": "add-linux-tools"
       },
-      {
-        "type": "overlay",
-        "name": "add-v4l-utils"
-      },
+      // {
+      //   "type": "overlay",
+      //   "name": "add-v4l-utils"
+      // },
       {
         "type": "overlay",
         "name": "add-msm-blacklist"
