@@ -14,24 +14,20 @@
       "cmd": "mkdir -p /persist /firmware"
     },
 
-    // Set up /persist directory structure and permissions
+    // Install modem setup script to /usr/local/bin
     {
-      "type": "chroot-cmd",
-      "cmd": "chmod 755 /persist"
-    },
-    {
-      "type": "chroot-cmd",
-      "cmd": "mkdir -p /persist/rmts"
-    },
-    {
-      "type": "chroot-cmd",
-      "cmd": "chmod 755 /persist/rmts"
+      "type": "copy-into-chroot",
+      "source": "create-modem-symlinks.sh",
+      "destination": "/usr/local/bin/setup-modem-symlinks.sh",
+      "permissions": "755"
     },
 
-    // Create modem partition symlinks in /persist/rmts
+    // Install systemd service for modem setup
     {
-      "type": "chroot-script",
-      "script": "create-modem-symlinks.sh"
+      "type": "copy-into-chroot",
+      "source": "files/particle-modem-setup.service",
+      "destination": "/etc/systemd/system/particle-modem-setup.service",
+      "permissions": "644"
     },
 
     // Install rmtfs if not already installed
@@ -60,6 +56,10 @@
     {
       "type": "chroot-cmd",
       "cmd": "systemctl enable rmtfs"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl enable particle-modem-setup.service"
     }
   ]
 }

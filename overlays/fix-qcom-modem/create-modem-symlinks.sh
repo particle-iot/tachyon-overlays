@@ -1,7 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# Create modem partition symlinks in /persist/rmts
+# Create the rmts directory if it doesn't exist
+mkdir -p /persist/rmts
 cd /persist/rmts
 
 ln -sf /dev/disk/by-partlabel/modemst1 modemst1

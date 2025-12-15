@@ -1,0 +1,13 @@
+[Unit]
+Description=Setup Qualcomm modem partition symlinks
+After=persist.mount
+RequiresMountsFor=/persist
+Before=rmtfs.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/setup-modem-symlinks.sh
+
+[Install]
+WantedBy=multi-user.target

@@ -9,5 +9,5 @@ PARTLABEL=modem_a      /vendor      vfat  defaults,ro,x-initrd.mount,x-systemd.a
 PARTLABEL=bluetooth_a  /bt_firmware vfat  defaults,ro,x-initrd.mount,x-systemd.automount  0  0
 
 # Tachyon modem support - persistent storage and firmware
-/dev/sdf8  /persist   ext4  rw,nosuid,nodev,noexec,noatime,discard,noauto_da_alloc,data=ordered  0  2
-/dev/sdg1  /firmware  vfat  ro,nodev,noexec,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro  0  0
+/dev/sdf8  /persist   ext4  rw,nosuid,nodev,noexec,noatime,discard,noauto_da_alloc,data=ordered,nofail,x-systemd.automount  0  0
+/dev/sdg1  /firmware  vfat  ro,nodev,noexec,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro,nofail,x-systemd.automount  0  0
