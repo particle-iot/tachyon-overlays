@@ -8,22 +8,10 @@
       "script": "install-configs.sh"
     },
 
-    // Create modem mountpoints
+    // Create modem mountpoints (created by add-fstab-mounts, but ensure they exist)
     {
       "type": "chroot-cmd",
       "cmd": "mkdir -p /persist /firmware"
-    },
-
-    // Add fstab entries for modem partitions (runs after add-fstab-mounts to append entries)
-    {
-      "type": "chroot-script",
-      "script": "setup-fstab.sh"
-    },
-
-    // Regenerate initramfs after fstab changes
-    {
-      "type": "chroot-cmd",
-      "cmd": "update-initramfs -k all -t -u"
     },
 
     // Set up /persist directory structure and permissions
