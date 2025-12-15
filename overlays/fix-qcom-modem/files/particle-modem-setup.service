@@ -1,8 +1,8 @@
 [Unit]
-Description=Setup Qualcomm modem partition symlinks
-After=persist.mount
-RequiresMountsFor=/persist
-Before=rmtfs.service
+Description=Setup Qualcomm modem partitions and symlinks
+After=local-fs.target dev-sdf8.device dev-sdg1.device
+Wants=dev-sdf8.device dev-sdg1.device
+Before=rmtfs.service ModemManager.service
 
 [Service]
 Type=oneshot
