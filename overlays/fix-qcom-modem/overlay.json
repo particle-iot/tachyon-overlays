@@ -2,64 +2,64 @@
   "name": "fix-qcom-modem",
   "description": "Configures Qualcomm modem support with ModemManager, rmtfs, and partition setup",
   "commands": [
-    // Install ModemManager and udev configs
-    {
-      "type": "chroot-script",
-      "script": "install-configs.sh"
-    },
+    // // Install ModemManager and udev configs
+    // {
+    //   "type": "chroot-script",
+    //   "script": "install-configs.sh"
+    // },
 
-    // Create modem mountpoints (created by add-fstab-mounts, but ensure they exist)
-    {
-      "type": "chroot-cmd",
-      "cmd": "mkdir -p /persist /firmware"
-    },
+    // // Create modem mountpoints (created by add-fstab-mounts, but ensure they exist)
+    // {
+    //   "type": "chroot-cmd",
+    //   "cmd": "mkdir -p /persist /firmware"
+    // },
 
-    // Install modem setup script to /usr/local/bin
-    {
-      "type": "copy-into-chroot",
-      "source": "create-modem-symlinks.sh",
-      "destination": "/usr/local/bin/setup-modem-symlinks.sh",
-      "permissions": "755"
-    },
+    // // Install modem setup script to /usr/local/bin
+    // {
+    //   "type": "copy-into-chroot",
+    //   "source": "create-modem-symlinks.sh",
+    //   "destination": "/usr/local/bin/setup-modem-symlinks.sh",
+    //   "permissions": "755"
+    // },
 
-    // Install systemd service for modem setup
-    {
-      "type": "copy-into-chroot",
-      "source": "files/particle-modem-setup.service",
-      "destination": "/etc/systemd/system/particle-modem-setup.service",
-      "permissions": "644"
-    },
+    // // Install systemd service for modem setup
+    // {
+    //   "type": "copy-into-chroot",
+    //   "source": "files/particle-modem-setup.service",
+    //   "destination": "/etc/systemd/system/particle-modem-setup.service",
+    //   "permissions": "644"
+    // },
 
-    // Install rmtfs if not already installed
-    {
-      "type": "chroot-cmd",
-      "cmd": "dpkg -s rmtfs >/dev/null 2>&1 || apt-get install -y rmtfs"
-    },
+    // // Install rmtfs if not already installed
+    // {
+    //   "type": "chroot-cmd",
+    //   "cmd": "dpkg -s rmtfs >/dev/null 2>&1 || apt-get install -y rmtfs"
+    // },
 
-    // Install systemd service overrides
-    {
-      "type": "chroot-script",
-      "script": "install-systemd-overrides.sh"
-    },
+    // // Install systemd service overrides
+    // {
+    //   "type": "chroot-script",
+    //   "script": "install-systemd-overrides.sh"
+    // },
 
-    // Reload systemd daemon to pick up overrides
-    {
-      "type": "chroot-cmd",
-      "cmd": "systemctl daemon-reload"
-    },
+    // // Reload systemd daemon to pick up overrides
+    // {
+    //   "type": "chroot-cmd",
+    //   "cmd": "systemctl daemon-reload"
+    // },
 
-    // Enable services
-    {
-      "type": "chroot-cmd",
-      "cmd": "systemctl enable ModemManager"
-    },
-    {
-      "type": "chroot-cmd",
-      "cmd": "systemctl enable rmtfs"
-    },
-    {
-      "type": "chroot-cmd",
-      "cmd": "systemctl enable particle-modem-setup.service"
-    }
+    // // Enable services
+    // {
+    //   "type": "chroot-cmd",
+    //   "cmd": "systemctl enable ModemManager"
+    // },
+    // {
+    //   "type": "chroot-cmd",
+    //   "cmd": "systemctl enable rmtfs"
+    // },
+    // {
+    //   "type": "chroot-cmd",
+    //   "cmd": "systemctl enable particle-modem-setup.service"
+    // }
   ]
 }
