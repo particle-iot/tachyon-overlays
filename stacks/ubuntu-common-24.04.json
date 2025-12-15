@@ -145,7 +145,7 @@
       },
       {
         "type": "overlay",
-        "name": "add-v4l-utils"
+        "name": "add-camera-support"
       },
       {
         "type": "overlay",
