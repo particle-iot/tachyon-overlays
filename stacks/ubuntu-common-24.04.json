@@ -87,10 +87,10 @@
         "type": "overlay",
         "name": "add-particle-user"
       },
-      {
-        "type": "overlay",
-        "name": "set-bash-default"
-      },
+      // {
+      //   "type": "overlay",
+      //   "name": "set-bash-default"
+      // },
       // {
       //   "type": "overlay",
       //   "name": "add-autologin-getty"
