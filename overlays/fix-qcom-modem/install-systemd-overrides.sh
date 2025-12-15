@@ -17,7 +17,7 @@ RestrictAddressFamilies=
 RestrictAddressFamilies=AF_NETLINK AF_UNIX AF_QIPCRTR AF_INET AF_INET6
 Environment=MM_PLUGIN_DEBUG=qcom-soc
 # Add a delay to ensure the modem has initialized and QRTR is populated
-ExecStartPre=/bin/sleep 10
+ExecStartPre=/bin/sleep 40
 ExecStart=
 ExecStart=/usr/sbin/ModemManager --debug
 EOF
