@@ -17,6 +17,10 @@
     {
       "type": "chroot-cmd",
       "cmd": "apt install mpv -y"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "apt install v4l-utils -y"
     }
   ]
 }

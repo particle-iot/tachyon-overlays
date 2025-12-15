@@ -1,10 +1,9 @@
 {
   "name": "add-fstab-mounts",
-  "description": "Install full fstab and regen initramfs",
+  "description": "Install full fstab with all mount points and regenerate initramfs",
   "commands": [
-    { "type": "chroot-cmd", "cmd": "mkdir -p /vendor /bt_firmware /boot/efi" },
+    { "type": "chroot-cmd", "cmd": "mkdir -p /vendor /bt_firmware /boot/efi /persist /firmware" },
     { "type": "copy-into-chroot", "source": "files/fstab", "destination": "/etc/fstab", "permissions": "644" },
-    { "type": "chroot-cmd", "cmd": "sed -i \"s/%ROOTFS_LABEL%/$(blkid -s LABEL -o value $(findmnt -no SOURCE /))/\" /etc/fstab"},
     { "type": "chroot-cmd", "cmd": "update-initramfs -k all -t -u" }
   ]
 }
