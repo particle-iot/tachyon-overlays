@@ -15,9 +15,9 @@ if ! mountpoint -q /firmware; then
     mount /dev/sdg1 /firmware || echo "Warning: Failed to mount /firmware"
 fi
 
-# Create the rmts directory and symlinks on the mounted /persist partition
-mkdir -p /persist/rmts
-cd /persist/rmts
+# Create the rmtfs directory and symlinks on the mounted /persist partition
+mkdir -p /persist/rmtfs
+cd /persist/rmtfs
 
 ln -sf /dev/disk/by-partlabel/modemst1 modemst1
 ln -sf /dev/disk/by-partlabel/modemst2 modemst2

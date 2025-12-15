@@ -89,10 +89,6 @@
       },
       // {
       //   "type": "overlay",
-      //   "name": "set-bash-default"
-      // },
-      // {
-      //   "type": "overlay",
       //   "name": "add-autologin-getty"
       // },
       // {
