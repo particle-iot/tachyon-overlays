@@ -1,5 +1,5 @@
 # Root filesystem
-LABEL=%ROOTFS_LABEL%   /            ext4  defaults,noatime,errors=remount-ro,commit=30  0  1
+LABEL=desktop-rootfs   /            ext4  defaults,noatime,errors=remount-ro,commit=30  0  1
 
 # Boot partition
 LABEL=UEFI             /boot/efi    vfat  umask=0077                  0  1
