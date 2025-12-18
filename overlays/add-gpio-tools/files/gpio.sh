@@ -7,7 +7,7 @@ GPIO_BASE=$(ls -la /sys/class/gpio | grep -E 'f[0-9a-f]+\.pinctrl' | sed -n 's/.
 
 # Define GPIO group mappings
 declare -A GPIO_GROUPS=(
-    ["display_cam"]="68 15 107"
+    ["display_cam"]="15"
     ["MCU"]="20 21 46 63"
     ["40pin"]="144 145 146 147 24 61 6 19 33 44 36 37 32 18 158 106 78 62 165 166"
     ["power"]="7"
@@ -15,9 +15,7 @@ declare -A GPIO_GROUPS=(
 
 # Define GPIO default direction and value for each pin
 declare -A GPIO_DEFAULTS=(
-    ["display_cam_68"]="out 0"
     ["display_cam_15"]="out 0"
-    ["display_cam_107"]="out 1"
     ["MCU_20"]="out 0"
     ["MCU_21"]="out 0"
     ["MCU_46"]="out 0"
