@@ -1,0 +1,16 @@
+{
+  "name": "add-cpu-governor-default",
+  "description": "Sets CPU governor to schedutil by default on boot",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/set-cpu-governor.service",
+      "destination": "/etc/systemd/system/set-cpu-governor.service",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl enable set-cpu-governor.service"
+    }
+  ]
+}
