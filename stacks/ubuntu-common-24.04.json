@@ -85,6 +85,10 @@
       },
       {
         "type": "overlay",
+        "name": "add-cpu-governor-default"
+      },
+      {
+        "type": "overlay",
         "name": "add-particle-user"
       },
       // {
