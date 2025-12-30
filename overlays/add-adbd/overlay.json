@@ -6,6 +6,12 @@
     {
       "type": "chroot-cmd",
       "cmd": "apt install adbd"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/99-adbd-role-switch.rules",
+      "destination": "/etc/udev/rules.d/99-adbd-role-switch.rules",
+      "permissions": "644"
     }
   ]
 }

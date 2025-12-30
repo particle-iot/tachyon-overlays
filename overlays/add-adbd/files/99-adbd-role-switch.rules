@@ -1,0 +1,19 @@
+SUBSYSTEM=="typec", KERNEL=="port0", ACTION=="change", \
+  RUN+="/bin/sh -c ' \
+    UDC_NAME=a600000.usb; \
+    CONFIGFS_DIR=/sys/kernel/config/usb_gadget/g1; \
+    if ! grep -q \"\\[device\\]\" /sys/class/typec/port0/data_role 2>/dev/null; then \
+      exit 0; \
+    fi; \
+    /usr/bin/systemctl is-enabled --quiet adbd.service || exit 0; \
+    /usr/bin/systemctl is-active --quiet adbd.service || exit 0; \
+    if [ ! -f \"$CONFIGFS_DIR/UDC\" ]; then \
+        /usr/lib/android-sdk/platform-tools/adbd-usb-gadget setup; \
+    fi; \
+    if [ -f \"$CONFIGFS_DIR/UDC\" ] && \
+       grep -qx \"$UDC_NAME\" \"$CONFIGFS_DIR/UDC\" 2>/dev/null; then \
+      exit 0; \
+    fi; \
+    /usr/bin/systemctl reset-failed adbd.service; \
+    /usr/lib/android-sdk/platform-tools/adbd-usb-gadget activate || /usr/bin/systemctl restart adbd.service; \
+  '"
