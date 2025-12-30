@@ -158,6 +158,10 @@
       {
         "type": "overlay",
         "name": "add-particle-version"
+      },
+      {
+        "type": "overlay",
+        "name": "add-test-kernel"
       }
     ]
   }

@@ -1,0 +1,10 @@
+{
+  "name": "add-test-kernel",
+  "description": "add test kernel",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "kernel.sh"
+    }
+  ]
+}
