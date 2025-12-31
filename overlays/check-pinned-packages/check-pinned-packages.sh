@@ -8,6 +8,11 @@ PACKAGES_TO_INSTALL=()
 
 # Loop through all environment variables looking for PKG_* pattern
 for var in $(compgen -e | grep '^PKG_'); do
+  # Skip metadata variables (not actual packages)
+  if [[ "$var" =~ ^PKG_DISTRO_ ]] || [[ "$var" =~ ^PKG_SRC_ ]]; then
+    continue
+  fi
+
   # Get the value
   value="${!var}"
 
