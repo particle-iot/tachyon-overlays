@@ -7,20 +7,21 @@ echo "[check-pinned-packages] Checking pinned package versions can be satisfied"
 PACKAGES_TO_INSTALL=()
 
 # Loop through all environment variables looking for PKG_* pattern
-while IFS='=' read -r name value; do
-  # Only process variables starting with PKG_
-  if [[ "$name" =~ ^PKG_[A-Za-z0-9_]+$ ]]; then
-    # Convert PKG_foo_bar to foo-bar package name
-    pkg_name="${name#PKG_}"        # Remove PKG_ prefix
-    pkg_name="${pkg_name//_/-}"    # Replace _ with -
-    pkg_name="${pkg_name,,}"       # Convert to lowercase
+for var in $(compgen -e | grep '^PKG_'); do
+  # Get the value
+  value="${!var}"
 
-    if [ -n "$value" ]; then
-      echo "  → Will install ${pkg_name}=${value}"
-      PACKAGES_TO_INSTALL+=("${pkg_name}=${value}")
-    fi
+  # Only process variables starting with PKG_ and having alphanumeric names
+  if [[ "$var" =~ ^PKG_[A-Za-z0-9_]+$ ]] && [ -n "$value" ]; then
+    # Convert PKG_foo_bar to foo-bar package name
+    pkg_name="${var#PKG_}"              # Remove PKG_ prefix
+    pkg_name="${pkg_name//_/-}"         # Replace _ with -
+    pkg_name=$(echo "$pkg_name" | tr '[:upper:]' '[:lower:]')  # Convert to lowercase
+
+    echo "  → Will install ${pkg_name}=${value}"
+    PACKAGES_TO_INSTALL+=("${pkg_name}=${value}")
   fi
-done < <(env | grep '^PKG_')
+done
 
 # If we have packages to install, do it
 if [ ${#PACKAGES_TO_INSTALL[@]} -gt 0 ]; then
