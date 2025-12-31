@@ -17,6 +17,10 @@
       },
       {
         "type": "overlay",
+        "name": "check-pinned-packages"
+      },
+      {
+        "type": "overlay",
         "name": "add-led-battery-charging-rules"
       },
       {

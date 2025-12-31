@@ -1,0 +1,10 @@
+{
+  "name": "check-pinned-packages",
+  "description": "Explicitly installs pinned packages with exact versions - fails if version not found",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "check-pinned-packages.sh"
+    }
+  ]
+}
