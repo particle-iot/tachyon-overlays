@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "[check-pinned-packages] Version 2025-01-15-v1 with substring suffix check"
+echo "[check-pinned-packages] Version 2025-01-15-v2 with multi-URL support (:: delimiter)"
 echo "[check-pinned-packages] Checking pinned package versions can be satisfied"
 
 # Track packages to install
@@ -50,26 +50,51 @@ if [ ${#PACKAGES_TO_INSTALL_URL[@]} -gt 0 ]; then
   echo "[check-pinned-packages] Installing ${#PACKAGES_TO_INSTALL_URL[@]} package(s) from URL:"
 
   for entry in "${PACKAGES_TO_INSTALL_URL[@]}"; do
-    IFS='|' read -r pkg_name url expected_version <<< "$entry"
-    deb_file="/tmp/${pkg_name}.deb"
+    IFS='|' read -r pkg_name urls expected_version <<< "$entry"
 
-    echo "  → Downloading ${pkg_name} (expecting version ${expected_version}) from ${url}"
-    if ! curl -fL --retry 3 -o "${deb_file}" "${url}"; then
-      echo "" >&2
-      echo "========================================================================" >&2
-      echo "[check-pinned-packages] ✗ ERROR: Failed to download ${pkg_name}" >&2
-      echo "URL: ${url}" >&2
-      echo "========================================================================" >&2
-      exit 1
-    fi
+    # Split URLs on :: delimiter to support multiple .deb files (e.g., kernel image + modules)
+    IFS='::' read -ra URL_ARRAY <<< "$urls"
 
-    echo "  → Installing ${pkg_name} via dpkg"
-    if ! dpkg -i "${deb_file}"; then
+    echo "  → Package: ${pkg_name} (version ${expected_version})"
+    echo "  → Found ${#URL_ARRAY[@]} file(s) to download"
+
+    # Download all files
+    deb_files=()
+    for i in "${!URL_ARRAY[@]}"; do
+      url="${URL_ARRAY[$i]}"
+      deb_file="/tmp/${pkg_name}-${i}.deb"
+      deb_files+=("${deb_file}")
+
+      echo "    → Downloading file $((i+1))/${#URL_ARRAY[@]}: ${url}"
+      if ! curl -fL --retry 3 -o "${deb_file}" "${url}"; then
+        echo "" >&2
+        echo "========================================================================" >&2
+        echo "[check-pinned-packages] ✗ ERROR: Failed to download ${pkg_name}" >&2
+        echo "URL: ${url}" >&2
+        echo "========================================================================" >&2
+        exit 1
+      fi
+    done
+
+    # Install all downloaded files together
+    echo "  → Installing ${#deb_files[@]} package file(s) via dpkg"
+    if ! dpkg -i "${deb_files[@]}"; then
       echo "  → Fixing dependencies with apt-get -f install"
-      apt-get install -f -y
+      if ! apt-get install -f -y; then
+        echo "" >&2
+        echo "========================================================================" >&2
+        echo "[check-pinned-packages] ✗ ERROR: Failed to install ${pkg_name}" >&2
+        echo "The package was downloaded but dpkg installation failed" >&2
+        echo "========================================================================" >&2
+        exit 1
+      fi
     fi
 
-    rm -f "${deb_file}"
+    # Clean up
+    for deb_file in "${deb_files[@]}"; do
+      rm -f "${deb_file}"
+    done
+
     echo "  ✓ Installed ${pkg_name} from URL"
   done
 fi
