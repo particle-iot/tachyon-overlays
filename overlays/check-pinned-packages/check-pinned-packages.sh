@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
+echo "[check-pinned-packages] Version 2025-01-15-v1 with substring suffix check"
 echo "[check-pinned-packages] Checking pinned package versions can be satisfied"
 
 # Track packages to install
@@ -15,7 +16,10 @@ for var in $(compgen -e | grep '^PKG_'); do
   fi
 
   # Skip _URL variables - they're companions to the version variables
-  if [ "${var: -4}" = "_URL" ]; then
+  # Debug: show what we're checking
+  var_suffix="${var: -4}"
+  if [ "$var_suffix" = "_URL" ]; then
+    echo "  [DEBUG] Skipping URL variable: $var"
     continue
   fi
 
