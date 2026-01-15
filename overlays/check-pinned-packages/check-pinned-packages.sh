@@ -14,6 +14,11 @@ for var in $(compgen -e | grep '^PKG_'); do
     continue
   fi
 
+  # Skip _URL variables - they're companions to the version variables
+  if [[ "$var" =~ _URL$ ]]; then
+    continue
+  fi
+
   # Get the value
   value="${!var}"
 
@@ -24,10 +29,11 @@ for var in $(compgen -e | grep '^PKG_'); do
     pkg_name="${pkg_name//_/-}"         # Replace _ with -
     pkg_name=$(echo "$pkg_name" | tr '[:upper:]' '[:lower:]')  # Convert to lowercase
 
-    # Check if value is a URL (starts with http:// or https://)
-    if [[ "$value" =~ ^https?:// ]]; then
-      echo "  → Will install ${pkg_name} from URL: ${value}"
-      PACKAGES_TO_INSTALL_URL+=("${pkg_name}|${value}")
+    # Check if there's a companion _URL variable
+    url_var="${var}_URL"
+    if [ -n "${!url_var:-}" ]; then
+      echo "  → Will install ${pkg_name} (version ${value}) from URL: ${!url_var}"
+      PACKAGES_TO_INSTALL_URL+=("${pkg_name}|${!url_var}|${value}")
     else
       echo "  → Will install ${pkg_name}=${value}"
       PACKAGES_TO_INSTALL_APT+=("${pkg_name}=${value}")
@@ -40,11 +46,10 @@ if [ ${#PACKAGES_TO_INSTALL_URL[@]} -gt 0 ]; then
   echo "[check-pinned-packages] Installing ${#PACKAGES_TO_INSTALL_URL[@]} package(s) from URL:"
 
   for entry in "${PACKAGES_TO_INSTALL_URL[@]}"; do
-    pkg_name="${entry%%|*}"
-    url="${entry#*|}"
+    IFS='|' read -r pkg_name url expected_version <<< "$entry"
     deb_file="/tmp/${pkg_name}.deb"
 
-    echo "  → Downloading ${pkg_name} from ${url}"
+    echo "  → Downloading ${pkg_name} (expecting version ${expected_version}) from ${url}"
     if ! curl -fL --retry 3 -o "${deb_file}" "${url}"; then
       echo "" >&2
       echo "========================================================================" >&2
