@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "[check-pinned-packages] Version 2025-01-15-v6 with multi-URL support (@@@ delimiter)"
+echo "[check-pinned-packages] Version 2025-01-15-v7 with multi-URL support (@@@ delimiter, newline split)"
 echo "[check-pinned-packages] Checking pinned package versions can be satisfied"
 
 # Track packages to install
@@ -55,8 +55,11 @@ if [ ${#PACKAGES_TO_INSTALL_URL[@]} -gt 0 ]; then
     IFS=$'\t' read -r pkg_name urls expected_version <<< "$entry"
 
     # Split URLs on @@@ delimiter to support multiple .deb files (e.g., kernel image + modules)
-    # Note: Can't use IFS with multi-char delimiter, so manually split on @@@
-    IFS='~' read -ra URL_ARRAY <<< "${urls//@@@/~}"
+    # Use newline-based splitting to avoid tilde expansion issues in chroot environments
+    URL_ARRAY=()
+    while IFS= read -r url; do
+      [[ -n "$url" ]] && URL_ARRAY+=("$url")
+    done < <(echo "$urls" | sed 's/@@@/\n/g')
 
     echo "  → Package: ${pkg_name} (version ${expected_version})"
     echo "  → Found ${#URL_ARRAY[@]} file(s) to download"
