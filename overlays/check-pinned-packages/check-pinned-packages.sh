@@ -15,7 +15,7 @@ for var in $(compgen -e | grep '^PKG_'); do
   fi
 
   # Skip _URL variables - they're companions to the version variables
-  if [[ "$var" =~ _URL$ ]]; then
+  if [[ "$var" == *_URL ]]; then
     continue
   fi
 
