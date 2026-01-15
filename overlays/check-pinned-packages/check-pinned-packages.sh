@@ -22,8 +22,8 @@ for var in $(compgen -e | grep '^PKG_'); do
   # Get the value
   value="${!var}"
 
-  # Only process variables starting with PKG_ and having alphanumeric names
-  if [[ "$var" =~ ^PKG_[A-Za-z0-9_]+$ ]] && [ -n "$value" ]; then
+  # Only process variables starting with PKG_ and having alphanumeric names (but not ending in _URL)
+  if [[ "$var" =~ ^PKG_[A-Za-z0-9_]+$ ]] && [[ ! "$var" =~ _URL$ ]] && [ -n "$value" ]; then
     # Convert PKG_foo_bar to foo-bar package name
     pkg_name="${var#PKG_}"              # Remove PKG_ prefix
     pkg_name="${pkg_name//_/-}"         # Replace _ with -
