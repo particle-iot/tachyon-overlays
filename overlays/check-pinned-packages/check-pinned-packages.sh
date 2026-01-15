@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "[check-pinned-packages] Version 2025-01-15-v2 with multi-URL support (:: delimiter)"
+echo "[check-pinned-packages] Version 2025-01-15-v3 with multi-URL support (||| delimiter)"
 echo "[check-pinned-packages] Checking pinned package versions can be satisfied"
 
 # Track packages to install
@@ -52,8 +52,9 @@ if [ ${#PACKAGES_TO_INSTALL_URL[@]} -gt 0 ]; then
   for entry in "${PACKAGES_TO_INSTALL_URL[@]}"; do
     IFS='|' read -r pkg_name urls expected_version <<< "$entry"
 
-    # Split URLs on :: delimiter to support multiple .deb files (e.g., kernel image + modules)
-    IFS='::' read -ra URL_ARRAY <<< "$urls"
+    # Split URLs on ||| delimiter to support multiple .deb files (e.g., kernel image + modules)
+    # Note: Can't use IFS with multi-char delimiter, so manually split on |||
+    IFS='~' read -ra URL_ARRAY <<< "${urls//|||/~}"
 
     echo "  → Package: ${pkg_name} (version ${expected_version})"
     echo "  → Found ${#URL_ARRAY[@]} file(s) to download"
