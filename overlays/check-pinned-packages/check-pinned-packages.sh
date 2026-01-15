@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-echo "[check-pinned-packages] Version 2025-01-15-v3 with multi-URL support (||| delimiter)"
+echo "[check-pinned-packages] Version 2025-01-15-v4 with multi-URL support"
 echo "[check-pinned-packages] Checking pinned package versions can be satisfied"
 
 # Track packages to install
@@ -37,7 +37,8 @@ for var in $(compgen -e | grep '^PKG_'); do
     url_var="${var}_URL"
     if [ -n "${!url_var:-}" ]; then
       echo "  → Will install ${pkg_name} (version ${value}) from URL: ${!url_var}"
-      PACKAGES_TO_INSTALL_URL+=("${pkg_name}|${!url_var}|${value}")
+      # Use tab as field separator (won't appear in URLs or package names)
+      PACKAGES_TO_INSTALL_URL+=("${pkg_name}"$'\t'"${!url_var}"$'\t'"${value}")
     else
       echo "  → Will install ${pkg_name}=${value}"
       PACKAGES_TO_INSTALL_APT+=("${pkg_name}=${value}")
@@ -50,7 +51,8 @@ if [ ${#PACKAGES_TO_INSTALL_URL[@]} -gt 0 ]; then
   echo "[check-pinned-packages] Installing ${#PACKAGES_TO_INSTALL_URL[@]} package(s) from URL:"
 
   for entry in "${PACKAGES_TO_INSTALL_URL[@]}"; do
-    IFS='|' read -r pkg_name urls expected_version <<< "$entry"
+    # Use tab as field separator (matches storage format)
+    IFS=$'\t' read -r pkg_name urls expected_version <<< "$entry"
 
     # Split URLs on ||| delimiter to support multiple .deb files (e.g., kernel image + modules)
     # Note: Can't use IFS with multi-char delimiter, so manually split on |||
