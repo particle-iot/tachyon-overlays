@@ -4,7 +4,8 @@ set -euo pipefail
 echo "[check-pinned-packages] Checking pinned package versions can be satisfied"
 
 # Track packages to install
-PACKAGES_TO_INSTALL=()
+PACKAGES_TO_INSTALL_APT=()
+PACKAGES_TO_INSTALL_URL=()
 
 # Loop through all environment variables looking for PKG_* pattern
 for var in $(compgen -e | grep '^PKG_'); do
@@ -23,17 +24,53 @@ for var in $(compgen -e | grep '^PKG_'); do
     pkg_name="${pkg_name//_/-}"         # Replace _ with -
     pkg_name=$(echo "$pkg_name" | tr '[:upper:]' '[:lower:]')  # Convert to lowercase
 
-    echo "  → Will install ${pkg_name}=${value}"
-    PACKAGES_TO_INSTALL+=("${pkg_name}=${value}")
+    # Check if value is a URL (starts with http:// or https://)
+    if [[ "$value" =~ ^https?:// ]]; then
+      echo "  → Will install ${pkg_name} from URL: ${value}"
+      PACKAGES_TO_INSTALL_URL+=("${pkg_name}|${value}")
+    else
+      echo "  → Will install ${pkg_name}=${value}"
+      PACKAGES_TO_INSTALL_APT+=("${pkg_name}=${value}")
+    fi
   fi
 done
 
-# If we have packages to install, do it
-if [ ${#PACKAGES_TO_INSTALL[@]} -gt 0 ]; then
-  echo "[check-pinned-packages] Installing ${#PACKAGES_TO_INSTALL[@]} pinned package(s) (will fail if version not found):"
+# Install packages from URLs (download and dpkg -i)
+if [ ${#PACKAGES_TO_INSTALL_URL[@]} -gt 0 ]; then
+  echo "[check-pinned-packages] Installing ${#PACKAGES_TO_INSTALL_URL[@]} package(s) from URL:"
+
+  for entry in "${PACKAGES_TO_INSTALL_URL[@]}"; do
+    pkg_name="${entry%%|*}"
+    url="${entry#*|}"
+    deb_file="/tmp/${pkg_name}.deb"
+
+    echo "  → Downloading ${pkg_name} from ${url}"
+    if ! curl -fL --retry 3 -o "${deb_file}" "${url}"; then
+      echo "" >&2
+      echo "========================================================================" >&2
+      echo "[check-pinned-packages] ✗ ERROR: Failed to download ${pkg_name}" >&2
+      echo "URL: ${url}" >&2
+      echo "========================================================================" >&2
+      exit 1
+    fi
+
+    echo "  → Installing ${pkg_name} via dpkg"
+    if ! dpkg -i "${deb_file}"; then
+      echo "  → Fixing dependencies with apt-get -f install"
+      apt-get install -f -y
+    fi
+
+    rm -f "${deb_file}"
+    echo "  ✓ Installed ${pkg_name} from URL"
+  done
+fi
+
+# Install packages via APT
+if [ ${#PACKAGES_TO_INSTALL_APT[@]} -gt 0 ]; then
+  echo "[check-pinned-packages] Installing ${#PACKAGES_TO_INSTALL_APT[@]} pinned package(s) via APT:"
 
   # Explicitly install packages and check for failure
-  if ! apt-get install -y --allow-downgrades "${PACKAGES_TO_INSTALL[@]}"; then
+  if ! apt-get install -y --allow-downgrades "${PACKAGES_TO_INSTALL_APT[@]}"; then
     echo "" >&2
     echo "========================================================================" >&2
     echo "[check-pinned-packages] ✗ ERROR: Failed to install pinned packages" >&2
@@ -45,9 +82,12 @@ if [ ${#PACKAGES_TO_INSTALL[@]} -gt 0 ]; then
     exit 1
   fi
 
-  echo "[check-pinned-packages] ✓ All pinned packages installed successfully"
-else
+  echo "[check-pinned-packages] ✓ All APT packages installed successfully"
+fi
+
+if [ ${#PACKAGES_TO_INSTALL_URL[@]} -eq 0 ] && [ ${#PACKAGES_TO_INSTALL_APT[@]} -eq 0 ]; then
   echo "[check-pinned-packages] No PKG_* environment variables found"
 fi
 
+echo "[check-pinned-packages] ✓ All pinned packages installed successfully"
 exit 0
