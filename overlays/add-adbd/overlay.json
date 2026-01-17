@@ -12,6 +12,19 @@
       "source": "files/99-adbd-role-switch.rules",
       "destination": "/etc/udev/rules.d/99-adbd-role-switch.rules",
       "permissions": "644"
-    }
+    },
+    { "type": "copy-into-chroot",
+      "source": "files/adbd-role-switch.sh",
+      "destination": "/usr/local/sbin/adbd-role-switch.sh",
+      "permissions": "755"
+    },
+    { "type": "copy-into-chroot",
+      "source": "files/adbd-role-switch.service",
+      "destination": "/etc/systemd/system/adbd-role-switch.service",
+      "permissions": "644"
+    },
+    { "type": "chroot-cmd",
+      "cmd": "systemctl daemon-reload && udevadm control --reload-rules"
+    }    
   ]
 }

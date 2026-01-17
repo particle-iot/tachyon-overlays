@@ -1,0 +1,13 @@
+[Unit]
+Description=Recover ADB gadget on Type-C role changes
+After=multi-user.target
+# If you want: ensure adbd is around
+# After=adbd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/adbd-role-switch.sh
+TimeoutStartSec=10
+
+[Install]
+WantedBy=multi-user.target
