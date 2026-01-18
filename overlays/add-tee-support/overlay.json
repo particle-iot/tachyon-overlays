@@ -1,0 +1,12 @@
+{
+  "name": "add-tee-support",
+  "description": "Enables TEE/smcinvoke support for secure applications (HDCP, DRM, secure storage)",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/tee.conf",
+      "destination": "/etc/modules-load.d/tee.conf",
+      "permissions": "644"
+    }
+  ]
+}
