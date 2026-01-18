@@ -157,6 +157,10 @@
       },
       {
         "type": "overlay",
+        "name": "add-tee-support"
+      },
+      {
+        "type": "overlay",
         "name": "add-msm-blacklist"
       },
       {
