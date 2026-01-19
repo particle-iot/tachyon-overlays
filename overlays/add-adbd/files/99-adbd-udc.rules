@@ -1,0 +1,2 @@
+# Restart adbd when UDC appears (handles role switch from host to device)
+ACTION=="add", SUBSYSTEM=="udc", KERNEL=="a600000.usb", RUN+="/bin/sh -c 'sleep 1 && systemctl restart adbd &'"
