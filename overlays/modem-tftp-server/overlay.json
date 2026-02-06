@@ -14,7 +14,7 @@
     {
       "type": "copy-into-chroot",
       "source": "files/qcom-rfs-server.service",
-      "destination": "/usr/lib/systemd/system/qcom-rfs-server.service",
+      "destination": "/etc/systemd/system/qcom-rfs-server.service",
       "permissions": "644"
     },
 
@@ -33,14 +33,14 @@
       "script": "files/setup-rfs-paths.sh"
     },
 
-    // Reload systemd and enable the service
+    // Enable service via symlink (chroot-compatible)
     {
       "type": "chroot-cmd",
-      "cmd": "systemctl daemon-reload"
+      "cmd": "mkdir -p /etc/systemd/system/sysinit.target.wants/"
     },
     {
       "type": "chroot-cmd",
-      "cmd": "systemctl enable qcom-rfs-server.service"
+      "cmd": "ln -sf /etc/systemd/system/qcom-rfs-server.service /etc/systemd/system/sysinit.target.wants/qcom-rfs-server.service"
     }
   ]
 }
