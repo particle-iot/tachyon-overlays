@@ -1,0 +1,46 @@
+{
+  "name": "modem-tftp-server",
+  "description": "Installs Qualcomm RFS (Remote File System) server for modem file access via QRTR. Complements rmtfs which provides block-level EFS access - this provides file-level Linux filesystem access for modem subsystems (MPSS, ADSP, CDSP, SLPI).",
+  "commands": [
+    // Install the RFS server binary (renamed from tftp_server to qcom-rfs-server)
+    {
+      "type": "copy-into-chroot",
+      "source": "files/qcom-rfs-server",
+      "destination": "/usr/sbin/qcom-rfs-server",
+      "permissions": "755"
+    },
+
+    // Install systemd service
+    {
+      "type": "copy-into-chroot",
+      "source": "files/qcom-rfs-server.service",
+      "destination": "/etc/systemd/system/qcom-rfs-server.service",
+      "permissions": "644"
+    },
+
+    // Install RFS path setup script
+    {
+      "type": "copy-into-chroot",
+      "source": "files/setup-rfs-paths.sh",
+      "destination": "/usr/local/bin/setup-rfs-paths.sh",
+      "permissions": "755"
+    },
+
+    // Create the RFS directory structure and symlinks
+    // This runs at image build time to create the base structure
+    {
+      "type": "chroot-script",
+      "script": "files/setup-rfs-paths.sh"
+    },
+
+    // Enable service via symlink (chroot-compatible)
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/systemd/system/sysinit.target.wants/"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "ln -sf /etc/systemd/system/qcom-rfs-server.service /etc/systemd/system/sysinit.target.wants/qcom-rfs-server.service"
+    }
+  ]
+}

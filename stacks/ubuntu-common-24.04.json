@@ -133,6 +133,10 @@
       },
       {
         "type": "overlay",
+        "name": "modem-tftp-server"
+      },
+      {
+        "type": "overlay",
         "name": "add-grub-configuration"
       },
       {
