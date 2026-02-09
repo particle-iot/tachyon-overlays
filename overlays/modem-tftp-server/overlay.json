@@ -41,6 +41,18 @@
     {
       "type": "chroot-cmd",
       "cmd": "ln -sf /etc/systemd/system/qcom-rfs-server.service /etc/systemd/system/sysinit.target.wants/qcom-rfs-server.service"
+    },
+
+    // Pre-configure NetworkManager cellular connection
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/NetworkManager/system-connections/"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/cellular.nmconnection",
+      "destination": "/etc/NetworkManager/system-connections/cellular.nmconnection",
+      "permissions": "600"
     }
   ]
 }
