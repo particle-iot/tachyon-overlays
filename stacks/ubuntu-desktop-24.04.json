@@ -17,6 +17,10 @@
         "name": "ubuntu-common-24.04"
       },
       //Desktop customizations etc...
+      {
+        "type": "overlay",
+        "name": "add-particle-desktop-dconf-24.04"
+      },
 
       {
         "type": "overlay",

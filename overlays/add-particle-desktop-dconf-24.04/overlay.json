@@ -1,0 +1,37 @@
+{
+  "name": "add-particle-desktop-dconf-24.04",
+  "description": "Applies Particle desktop dconf settings for Ubuntu 24.04 (dark theme, dock position, wallpaper, etc.)",
+  "commands": [
+    // Ensure dconf directories exist
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/dconf/db/local.d"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /etc/dconf/profile"
+    },
+
+    // Install dconf settings to system database
+    {
+      "type": "copy-into-chroot",
+      "source": "files/01-particle-desktop.conf",
+      "destination": "/etc/dconf/db/local.d/01-particle-desktop.conf",
+      "permissions": "644"
+    },
+
+    // Install dconf profile (user-db first, then system-db)
+    {
+      "type": "copy-into-chroot",
+      "source": "files/user",
+      "destination": "/etc/dconf/profile/user",
+      "permissions": "644"
+    },
+
+    // Compile dconf database
+    {
+      "type": "chroot-cmd",
+      "cmd": "dconf update"
+    }
+  ]
+}

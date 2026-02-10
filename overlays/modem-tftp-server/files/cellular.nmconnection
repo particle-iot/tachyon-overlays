@@ -1,0 +1,8 @@
+[connection]
+id=cellular
+autoconnect=true
+wait-device-timeout=90
+
+[gsm]
+apn=ksx.global.data
+home-only=false
