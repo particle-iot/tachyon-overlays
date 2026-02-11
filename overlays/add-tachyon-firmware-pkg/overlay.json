@@ -8,7 +8,7 @@
       },
       {
         "type": "chroot-cmd",
-        "cmd": "apt install tachyon-firmware protection-domain-mapper rmtfs -y"
+        "cmd": "apt install tachyon-firmware tachyon-audio protection-domain-mapper rmtfs -y"
       },
       {
         "type": "chroot-cmd",
