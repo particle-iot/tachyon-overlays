@@ -24,6 +24,10 @@
 
       {
         "type": "overlay",
+        "name": "change-particle-repo-to-stable"
+      },
+      {
+        "type": "overlay",
         "name": "pin-pkg-versions-cleanup"
       },
       //NOTE:
