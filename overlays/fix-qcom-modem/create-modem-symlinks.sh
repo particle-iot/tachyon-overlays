@@ -6,7 +6,12 @@ echo "Setting up Qualcomm modem partitions..."
 # Mount /persist partition if not already mounted
 if ! mountpoint -q /persist; then
     echo "Mounting /persist partition..."
-    mount /dev/sdf8 /persist || echo "Warning: Failed to mount /persist"
+    if ! mount /dev/sdf8 /persist; then
+        echo "Mount failed, formatting /persist partition with ext4..."
+        mkfs.ext4 -F /dev/sdf8
+        echo "Retrying mount..."
+        mount /dev/sdf8 /persist || echo "Warning: Failed to mount /persist after formatting"
+    fi
 fi
 
 # Mount /firmware partition if not already mounted
