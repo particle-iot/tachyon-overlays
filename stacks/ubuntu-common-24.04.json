@@ -169,8 +169,12 @@
       },
       {
         "type": "overlay",
+        "name": "add-lpac"
+      },
+      {
+        "type": "overlay",
         "name": "add-particle-version"
       }
     ]
   }
-  
+

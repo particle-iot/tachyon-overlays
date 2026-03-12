@@ -1,0 +1,26 @@
+{
+  "name": "lpac for eSIM profile management",
+  "description": "Add in lpac tool for eSIM profile management via QMI Library and QRTR driver",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /opt/lib"
+    },
+    {
+      "type": "copy-into-chroot",       
+      "source": "files/libqmi-glib.so.5",
+      "destination": "/opt/lib/libqmi-glib.so.5",
+      "permissions": "777"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/lpac",
+      "destination": "/usr/bin/lpac",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "chmod +x /usr/bin/lpac"
+    }
+  ]
+}
