@@ -19,10 +19,10 @@
       "type": "overlay",
       "name": "manufacturing"
     },
-    // {
-    //   "type": "overlay",
-    //   "name": "add-kigen-sdk"
-    // },
+    {
+      "type": "overlay",
+      "name": "add-kigen-sdk"
+    },
     {
       "type": "overlay",
       "name": "add-led-battery-charging-rules"
