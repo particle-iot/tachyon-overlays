@@ -129,6 +129,14 @@
       },
       {
         "type": "overlay",
+        "name": "link-ath11k-firmware"
+      },
+      {
+        "type": "overlay",
+        "name": "link-qca-bt-firmware"
+      },
+      {
+        "type": "overlay",
         "name": "fix-qcom-modem"
       },
       {
