@@ -137,6 +137,14 @@
       },
       {
         "type": "overlay",
+        "name": "add-gpu-firmware"
+      },
+      {
+        "type": "overlay",
+        "name": "add-tachyon-audio"
+      },
+      {
+        "type": "overlay",
         "name": "fix-qcom-modem"
       },
       {

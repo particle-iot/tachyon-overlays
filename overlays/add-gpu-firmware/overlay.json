@@ -1,0 +1,48 @@
+{
+  "name": "add-gpu-firmware",
+  "description": "Install Adreno A660 GPU firmware: ZAP shader (signed, dts-named) + SQE/GMU (driver-hardcoded qcom/* paths). See SOURCES.md for origins.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/a660_zap.b00",
+      "destination": "/lib/firmware/updates/a660_zap.b00",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/a660_zap.b01",
+      "destination": "/lib/firmware/updates/a660_zap.b01",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/a660_zap.b02",
+      "destination": "/lib/firmware/updates/a660_zap.b02",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/a660_zap.elf",
+      "destination": "/lib/firmware/updates/a660_zap.elf",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/a660_zap.mdt",
+      "destination": "/lib/firmware/updates/a660_zap.mdt",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/a660_sqe.fw",
+      "destination": "/lib/firmware/qcom/a660_sqe.fw",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/a660_gmu.bin",
+      "destination": "/lib/firmware/qcom/a660_gmu.bin",
+      "permissions": "644"
+    }
+  ]
+}
