@@ -1,8 +1,8 @@
 {
   "name": "add-fstab-mounts",
-  "description": "Install full fstab with all mount points and regenerate initramfs",
+  "description": "Install new-BP fstab (root + core_nhlos_a/dtb_a/persist mounts) and regenerate initramfs. No /boot/efi mount: UEFI reads the ESP directly, and an unmountable ESP must not fail local-fs.target into emergency mode.",
   "commands": [
-    { "type": "chroot-cmd", "cmd": "mkdir -p /vendor /bt_firmware /boot/efi /persist /firmware" },
+    { "type": "chroot-cmd", "cmd": "mkdir -p /vendor /boot/dtb_a /persist" },
     { "type": "copy-into-chroot", "source": "files/fstab", "destination": "/etc/fstab", "permissions": "644" },
     { "type": "chroot-cmd", "cmd": "update-initramfs -k all -t -u" }
   ]
