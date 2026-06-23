@@ -9,9 +9,18 @@ FW_DIR="/tmp/QCM6490_fw"
 rm -rf "${FW_DIR}"
 python3 -m zipfile -e "${FW_ZIP}" /tmp/
 
-mkdir -p /lib/firmware /usr/lib/dsp
-cp -a "${FW_DIR}/lib/firmware/." /lib/firmware/
-cp -a "${FW_DIR}/usr/lib/dsp/." /usr/lib/dsp/
+# This overlay owns ONLY the DSP / qcom platform firmware. Copy just qcom/ (adsp,
+# cdsp, qupv3fw.elf, ...) and the DSP skeleton libs - NOT the whole lib/firmware
+# tree. The bp-fw zip also ships ath11k/qcacld/updates(qca) wifi+bt firmware, but
+# those are provided by the link-ath11k-firmware / link-qca-bt-firmware overlays as
+# symlinks into /vendor. /vendor is not mounted inside the chroot, so those symlinks
+# are dangling; copying the full tree over them fails with "cp: not writing through
+# dangling symlink", which trips set -e and aborts the whole build.
+# --remove-destination: bp-fw files are authoritative; replace any pre-existing
+# (possibly dangling) symlink with the real bytes instead of erroring out.
+mkdir -p /lib/firmware/qcom /usr/lib/dsp
+cp -a --remove-destination "${FW_DIR}/lib/firmware/qcom/." /lib/firmware/qcom/
+cp -a --remove-destination "${FW_DIR}/usr/lib/dsp/." /usr/lib/dsp/
 
 # qcom_geni_se driver expects /lib/firmware/qupv3fw.elf
 ln -sf qcom/qcm6490/qupv3fw.elf /lib/firmware/qupv3fw.elf
