@@ -1,0 +1,10 @@
+{
+  "name": "link-ath11k-firmware",
+  "description": "Symlink ath11k WCN6855/QCA6698AQ firmware from /vendor/wlan into /lib/firmware/updates/ath11k/QCA6698AQ/hw2.1",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "link-firmware.sh"
+    }
+  ]
+}

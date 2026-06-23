@@ -1,0 +1,10 @@
+{
+  "name": "link-qca-bt-firmware",
+  "description": "Symlink QCA Bluetooth firmware from /vendor/btfw into /lib/firmware/updates/qca",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "link-firmware.sh"
+    }
+  ]
+}

@@ -8,7 +8,8 @@
       "script": "install-configs.sh"
     },
 
-    // Create modem mountpoints (created by add-fstab-mounts, but ensure they exist)
+    // Create modem mountpoints (created by add-fstab-mounts, but ensure they exist).
+    // /firmware is only mounted on the 1.1 build; the empty dir is harmless on 1.2+.
     {
       "type": "chroot-cmd",
       "cmd": "mkdir -p /persist /firmware"
