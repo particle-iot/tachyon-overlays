@@ -14,12 +14,6 @@ if ! mountpoint -q /persist; then
     fi
 fi
 
-# Mount /firmware partition if not already mounted
-if ! mountpoint -q /firmware; then
-    echo "Mounting /firmware partition..."
-    mount /dev/sdg1 /firmware || echo "Warning: Failed to mount /firmware"
-fi
-
 # Create the rmtfs directory and symlinks on the mounted /persist partition
 mkdir -p /persist/rmtfs
 cd /persist/rmtfs

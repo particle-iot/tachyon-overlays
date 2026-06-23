@@ -129,6 +129,26 @@
       },
       {
         "type": "overlay",
+        "name": "add-qcm6490-bp-fw"
+      },
+      {
+        "type": "overlay",
+        "name": "link-ath11k-firmware"
+      },
+      {
+        "type": "overlay",
+        "name": "link-qca-bt-firmware"
+      },
+      {
+        "type": "overlay",
+        "name": "add-gpu-firmware"
+      },
+      {
+        "type": "overlay",
+        "name": "add-tachyon-audio"
+      },
+      {
+        "type": "overlay",
         "name": "fix-qcom-modem"
       },
       {

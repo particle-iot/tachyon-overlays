@@ -1,0 +1,24 @@
+{
+  "name": "add-qcm6490-bp-fw",
+  "description": "Unpack the QCM6490 bp-fw firmware (provided via $RESOURCES by the composer, versioned from versions.json) onto /lib/firmware and /usr/lib/dsp, so the kernel firmware loader finds adsp/cdsp at qcom/qcm6490/ and geni gets qupv3fw.elf.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "$RESOURCES/QCM6490_fw.zip",
+      "destination": "/tmp/QCM6490_fw.zip",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-script",
+      "script": "install-qcm6490-bp-fw.sh"
+    },
+    {
+      "type": "chroot-rm",
+      "destination": "/tmp/QCM6490_fw.zip"
+    },
+    {
+      "type": "chroot-rm",
+      "destination": "/tmp/QCM6490_fw"
+    }
+  ]
+}
