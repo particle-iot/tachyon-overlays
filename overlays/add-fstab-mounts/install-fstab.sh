@@ -5,12 +5,14 @@
 # and a separate /firmware partition. Build 1.2+ ("new-BP") uses the cloud-image
 # root label and the core_nhlos_a / dtb_a partitions, with no /boot/efi mount.
 #
-# Branches on PKG_UBUNTU_24_04_VERSION, which the overlay tool forwards into the
+# Branches on ENV_UBUNTU_24_04_VERSION, which the overlay tool forwards into the
 # chroot. The two candidate fstabs are staged at /tmp/fstab.11 and /tmp/fstab.12
 # by the overlay's copy-into-chroot steps.
 set -euo pipefail
 
-VERSION="${PKG_UBUNTU_24_04_VERSION:-1.1}"
+# Print what we received so CI logs confirm the ENV_ value reached the chroot.
+echo "[add-fstab-mounts] read ENV_UBUNTU_24_04_VERSION='${ENV_UBUNTU_24_04_VERSION:-}' (defaults to 1.1 if empty)"
+VERSION="${ENV_UBUNTU_24_04_VERSION:-1.1}"
 
 # True when VERSION >= 1.2 (dotted version compare via sort -V).
 if [ "$(printf '%s\n1.2\n' "$VERSION" | sort -V | head -n1)" = "1.2" ]; then

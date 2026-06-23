@@ -1,6 +1,6 @@
 {
   "name": "add-fstab-mounts",
-  "description": "Install the fstab for the target Ubuntu 24.04 build and regenerate initramfs. Selects between the 1.1 layout (boot/efi, bluetooth_a, /firmware) and the new-BP 1.2+ layout (core_nhlos_a/dtb_a, no /boot/efi) based on PKG_UBUNTU_24_04_VERSION.",
+  "description": "Install the fstab for the target Ubuntu 24.04 build and regenerate initramfs. Selects between the 1.1 layout (boot/efi, bluetooth_a, /firmware) and the new-BP 1.2+ layout (core_nhlos_a/dtb_a, no /boot/efi) based on ENV_UBUNTU_24_04_VERSION.",
   "commands": [
     { "type": "copy-into-chroot", "source": "files/fstab", "destination": "/tmp/fstab.11", "permissions": "644" },
     { "type": "copy-into-chroot", "source": "files/fstab.bp", "destination": "/tmp/fstab.12", "permissions": "644" },

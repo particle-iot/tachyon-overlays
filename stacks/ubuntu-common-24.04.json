@@ -131,27 +131,27 @@
       {
         "type": "overlay",
         "name": "add-qcm6490-bp-fw",
-        "when": { "env": "PKG_UBUNTU_24_04_VERSION", "min": "1.2" }
+        "when": { "env": "ENV_UBUNTU_24_04_VERSION", "min": "1.2" }
       },
       {
         "type": "overlay",
         "name": "link-ath11k-firmware",
-        "when": { "env": "PKG_UBUNTU_24_04_VERSION", "min": "1.2" }
+        "when": { "env": "ENV_UBUNTU_24_04_VERSION", "min": "1.2" }
       },
       {
         "type": "overlay",
         "name": "link-qca-bt-firmware",
-        "when": { "env": "PKG_UBUNTU_24_04_VERSION", "min": "1.2" }
+        "when": { "env": "ENV_UBUNTU_24_04_VERSION", "min": "1.2" }
       },
       {
         "type": "overlay",
         "name": "add-gpu-firmware",
-        "when": { "env": "PKG_UBUNTU_24_04_VERSION", "min": "1.2" }
+        "when": { "env": "ENV_UBUNTU_24_04_VERSION", "min": "1.2" }
       },
       {
         "type": "overlay",
         "name": "add-tachyon-audio",
-        "when": { "env": "PKG_UBUNTU_24_04_VERSION", "min": "1.2" }
+        "when": { "env": "ENV_UBUNTU_24_04_VERSION", "min": "1.2" }
       },
       {
         "type": "overlay",
@@ -161,7 +161,7 @@
       {
         "type": "overlay",
         "name": "link-modem-firmware",
-        "when": { "env": "PKG_UBUNTU_24_04_VERSION", "min": "1.2" }
+        "when": { "env": "ENV_UBUNTU_24_04_VERSION", "min": "1.2" }
       },
       {
         "type": "overlay",

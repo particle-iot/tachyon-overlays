@@ -1,6 +1,6 @@
 {
   "name": "link-modem-firmware",
-  "description": "New-BP (Ubuntu 24.04 build 1.2+) only: expose the modem firmware (core_nhlos_a, mounted at /vendor/modem) under the path the kernel's request_firmware() searches, fixing the DSP/modem remoteproc 'request_firmware failed: -2' at boot. Gated in the stack via PKG_UBUNTU_24_04_VERSION min 1.2.",
+  "description": "New-BP (Ubuntu 24.04 build 1.2+) only: expose the modem firmware (core_nhlos_a, mounted at /vendor/modem) under the path the kernel's request_firmware() searches, fixing the DSP/modem remoteproc 'request_firmware failed: -2' at boot. Gated in the stack via ENV_UBUNTU_24_04_VERSION min 1.2.",
   "commands": [
     {
       "type": "chroot-cmd",
