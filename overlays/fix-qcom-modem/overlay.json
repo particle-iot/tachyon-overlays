@@ -8,18 +8,11 @@
       "script": "install-configs.sh"
     },
 
-    // Create modem mountpoints (created by add-fstab-mounts, but ensure they exist)
+    // Create modem mountpoints (created by add-fstab-mounts, but ensure they exist).
+    // /firmware is only mounted on the 1.1 build; the empty dir is harmless on 1.2+.
     {
       "type": "chroot-cmd",
-      "cmd": "mkdir -p /persist"
-    },
-
-    // Expose the modem firmware (core_nhlos_a, mounted at /vendor/modem) under
-    // the path the kernel's request_firmware() searches, fixing the DSP/modem
-    // remoteproc "request_firmware failed: -2" at boot.
-    {
-      "type": "chroot-cmd",
-      "cmd": "mkdir -p /lib/firmware/tachyon && ln -sf /vendor/modem /lib/firmware/tachyon/modem"
+      "cmd": "mkdir -p /persist /firmware"
     },
 
     // Install modem setup script to /usr/local/bin

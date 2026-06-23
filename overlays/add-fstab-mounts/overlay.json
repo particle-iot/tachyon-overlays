@@ -1,9 +1,9 @@
 {
   "name": "add-fstab-mounts",
-  "description": "Install new-BP fstab (root + core_nhlos_a/dtb_a/persist mounts) and regenerate initramfs. No /boot/efi mount: UEFI reads the ESP directly, and an unmountable ESP must not fail local-fs.target into emergency mode.",
+  "description": "Install the fstab for the target Ubuntu 24.04 build and regenerate initramfs. Selects between the 1.1 layout (boot/efi, bluetooth_a, /firmware) and the new-BP 1.2+ layout (core_nhlos_a/dtb_a, no /boot/efi) based on PKG_UBUNTU_24_04_VERSION.",
   "commands": [
-    { "type": "chroot-cmd", "cmd": "mkdir -p /vendor /boot/dtb_a /persist" },
-    { "type": "copy-into-chroot", "source": "files/fstab", "destination": "/etc/fstab", "permissions": "644" },
-    { "type": "chroot-cmd", "cmd": "update-initramfs -k all -t -u" }
+    { "type": "copy-into-chroot", "source": "files/fstab", "destination": "/tmp/fstab.11", "permissions": "644" },
+    { "type": "copy-into-chroot", "source": "files/fstab.bp", "destination": "/tmp/fstab.12", "permissions": "644" },
+    { "type": "chroot-script", "script": "install-fstab.sh" }
   ]
 }

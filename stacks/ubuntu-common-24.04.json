@@ -127,29 +127,41 @@
         "type": "overlay",
         "name": "add-fstab-mounts"
       },
+      // New-BP (Ubuntu 24.04 build 1.2+) firmware/audio overlays. Skipped on 1.1.
       {
         "type": "overlay",
-        "name": "add-qcm6490-bp-fw"
+        "name": "add-qcm6490-bp-fw",
+        "when": { "env": "PKG_UBUNTU_24_04_VERSION", "min": "1.2" }
       },
       {
         "type": "overlay",
-        "name": "link-ath11k-firmware"
+        "name": "link-ath11k-firmware",
+        "when": { "env": "PKG_UBUNTU_24_04_VERSION", "min": "1.2" }
       },
       {
         "type": "overlay",
-        "name": "link-qca-bt-firmware"
+        "name": "link-qca-bt-firmware",
+        "when": { "env": "PKG_UBUNTU_24_04_VERSION", "min": "1.2" }
       },
       {
         "type": "overlay",
-        "name": "add-gpu-firmware"
+        "name": "add-gpu-firmware",
+        "when": { "env": "PKG_UBUNTU_24_04_VERSION", "min": "1.2" }
       },
       {
         "type": "overlay",
-        "name": "add-tachyon-audio"
+        "name": "add-tachyon-audio",
+        "when": { "env": "PKG_UBUNTU_24_04_VERSION", "min": "1.2" }
       },
       {
         "type": "overlay",
         "name": "fix-qcom-modem"
+      },
+      // New-BP (1.2+) only: expose modem firmware under the kernel's request_firmware() path.
+      {
+        "type": "overlay",
+        "name": "link-modem-firmware",
+        "when": { "env": "PKG_UBUNTU_24_04_VERSION", "min": "1.2" }
       },
       {
         "type": "overlay",
