@@ -129,6 +129,10 @@
       },
       {
         "type": "overlay",
+        "name": "add-qcm6490-bp-fw"
+      },
+      {
+        "type": "overlay",
         "name": "link-ath11k-firmware"
       },
       {
