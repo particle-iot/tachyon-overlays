@@ -14,12 +14,6 @@
     },
     {
       "type": "copy-into-chroot",
-      "source": "files/qcm6490.conf",
-      "destination": "/usr/share/alsa/ucm2/conf.d/qcm6490/qcm6490.conf",
-      "permissions": "644"
-    },
-    {
-      "type": "copy-into-chroot",
       "source": "files/qcm6490-tachyon-snd-card.conf",
       "destination": "/usr/share/alsa/ucm2/conf.d/qcm6490/qcm6490-tachyon-snd-card.conf",
       "permissions": "644"
@@ -28,6 +22,12 @@
       "type": "copy-into-chroot",
       "source": "files/HiFi.conf",
       "destination": "/usr/share/alsa/ucm2/Qualcomm/qcm6490-tachyon/HiFi.conf",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/HDMI.conf",
+      "destination": "/usr/share/alsa/ucm2/Qualcomm/qcm6490-tachyon/HDMI.conf",
       "permissions": "644"
     },
     {
