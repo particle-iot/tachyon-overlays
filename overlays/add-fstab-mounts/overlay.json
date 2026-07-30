@@ -1,9 +1,10 @@
 {
   "name": "add-fstab-mounts",
-  "description": "Install new-BP fstab (root + core_nhlos_a/dtb_a/persist mounts) and regenerate initramfs. No /boot/efi mount: UEFI reads the ESP directly, and an unmountable ESP must not fail local-fs.target into emergency mode.",
+  "description": "Install new-BP fstab (root + core_nhlos_a/dtb_a/persist mounts), mount /vendor from initramfs so firmware symlinks resolve before udev autoloads their drivers, and regenerate initramfs. No /boot/efi mount: UEFI reads the ESP directly, and an unmountable ESP must not fail local-fs.target into emergency mode.",
   "commands": [
     { "type": "chroot-cmd", "cmd": "mkdir -p /vendor /boot/dtb_a /persist" },
     { "type": "copy-into-chroot", "source": "files/fstab", "destination": "/etc/fstab", "permissions": "644" },
+    { "type": "copy-into-chroot", "source": "files/mount-vendor", "destination": "/etc/initramfs-tools/scripts/init-bottom/mount-vendor", "permissions": "755" },
     { "type": "chroot-cmd", "cmd": "update-initramfs -k all -t -u" }
   ]
 }

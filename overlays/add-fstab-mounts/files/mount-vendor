@@ -1,0 +1,41 @@
+#!/bin/sh
+# Mount the non-HLOS firmware partition before switch_root.
+#
+# core_nhlos_a carries the Qualcomm BP firmware blobs (wlan / gpu / modem) that
+# the symlinks under /lib/firmware/updates point at. Their consumers are kernel
+# modules autoloaded by udev early in the rootfs stage - ath11k_pci for instance
+# requests its board file roughly 300ms before systemd gets around to the
+# /vendor entry in fstab - so at that moment the symlinks are still dangling and
+# the firmware loader reports the files as missing.
+#
+# Where a driver has no fallback (ath11k board.bin) this shows up as an outright
+# failure; where linux-firmware happens to ship a same-named file (amss.bin,
+# m3.bin) it silently loads the upstream blob instead of the vendor one, which
+# is worse because nothing complains.
+#
+# Mounting here replaces that race with a fixed ordering: this runs before
+# switch_root, and the mount lives under ${rootmnt} so it carries over. The
+# fstab entry is kept as a fallback and is a no-op once we succeed.
+
+[ "$1" = "prereqs" ] && { echo; exit 0; }
+
+log() { echo "mount-vendor: $*" > /dev/kmsg 2>/dev/null; }
+
+# Prefer the by-partlabel link; fall back to blkid. Never hardcode a device
+# node - the UFS LUN enumeration order is not guaranteed.
+DEV=/dev/disk/by-partlabel/core_nhlos_a
+[ -e "$DEV" ] || DEV="$(blkid -t PARTLABEL=core_nhlos_a -o device 2>/dev/null)"
+
+if [ -z "$DEV" ] || [ ! -e "$DEV" ]; then
+    log "core_nhlos_a not found, leaving /vendor to fstab"
+    exit 0
+fi
+
+mkdir -p "${rootmnt}/vendor"
+if mount -t vfat -o ro,nosuid,nodev,noexec "$DEV" "${rootmnt}/vendor" 2>/dev/null; then
+    log "mounted $DEV on /vendor"
+else
+    log "failed to mount $DEV, leaving /vendor to fstab"
+fi
+
+exit 0
