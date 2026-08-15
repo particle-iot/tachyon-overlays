@@ -1,0 +1,17 @@
+#!/bin/sh
+# Refresh the linker cache and drop CamX's parsed-sensor cache.
+#
+# The /usr/lib/*.so* links ship in this package's payload, so dpkg has already
+# placed them by the time this runs; ldconfig just needs to see them. The CamX
+# cache is keyed on the sensor description files, and a stale entry makes a
+# freshly installed module invisible to enumeration.
+set -e
+
+case "$1" in
+configure)
+    ldconfig
+    rm -rf /var/cache/camera/*.bin /var/cache/camera/camxcache* 2>/dev/null || true
+    ;;
+esac
+
+exit 0

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Tachyon IMX519 camera module, CSI1 / 4-lane D-PHY, cameraId 0.
+
+  Derived from sunny_imx519_module.xml. The eeprom and flash entries are
+  dropped: this module has neither. PDAF is likewise omitted for bring-up.
+
+  actuatorName is declared unconditionally. Whether the fitted module has a
+  VCM is a property of the module, not of the connector, and the two cases
+  are compatible: a module without one just never moves the lens, which is
+  harmless. Dropping the entry would instead deny autofocus to modules that
+  do have it, so the profile keeps it and lets the hardware decide. Clients
+  that want to skip the (pointless) AF sweep on a fixed-focus module can set
+  ANDROID_CONTROL_AF_MODE=OFF per request.
+
+  laneAssign is one nibble per data lane, low nibble first, so 0x3210 maps
+  lanes 0..3 onto PHY lanes 0..3. It must agree with laneCount in the sensor
+  XML, which selects how many nibbles are consumed.
+-->
+<cameraModuleData
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="..\..\..\api\sensor\camxmoduleconfig.xsd">
+  <module_version major_revision="1" minor_revision="0" incr_revision="0"/>
+  <moduleGroup>
+    <moduleConfiguration description="Module configuration">
+      <cameraId>0</cameraId>
+      <moduleName>tachyon</moduleName>
+      <sensorName>imx519</sensorName>
+      <actuatorName>ak7375</actuatorName>
+      <chromatixName>sunny_imx519</chromatixName>
+      <position>REAR</position>
+      <CSIInfo description="CSI Information">
+          <laneAssign>0x3210</laneAssign>
+          <isComboMode>0</isComboMode>
+      </CSIInfo>
+      <lensInfo description="Lens Information">
+        <focalLength>4.28</focalLength>
+        <fNumber>1.79</fNumber>
+        <minFocusDistance>0.08</minFocusDistance>
+        <maxFocusDistance>2.0</maxFocusDistance>
+        <horizontalViewAngle>66.3</horizontalViewAngle>
+        <verticalViewAngle>52.4</verticalViewAngle>
+        <maxRollDegree>360</maxRollDegree>
+        <maxPitchDegree>360</maxPitchDegree>
+        <maxYawDegree>360</maxYawDegree>
+      </lensInfo>
+    </moduleConfiguration>
+  </moduleGroup>
+</cameraModuleData>

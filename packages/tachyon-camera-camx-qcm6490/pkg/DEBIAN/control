@@ -1,0 +1,46 @@
+Package: tachyon-camera-camx-qcm6490
+Version: 0.1~exp1
+Architecture: arm64
+Maintainer: Tachyon Platform <eugene@particle.io>
+Section: misc
+Priority: optional
+Depends: qcom-camx-qcm6490 (= 1.0.6+repack2),
+         qcom-camxlib-qcm6490 (= 1.0.6+repack2),
+         qcom-chicdk-qcm6490 (= 1.0.6+repack2),
+         qcom-fastrpc1 (= 1.0.15+repack2),
+         qcom-libdmabufheap (= 1.1.0+250131+rel1.0+nmu1),
+         qcom-libqmi-framework (= 1.0.1+repack2),
+         qcom-sensing-hub (= 1.0.2-0ubuntu1),
+         qcom-sensors-core (= 1.0.0+250130+rel1.2+testapps-0ubuntu4),
+         qcom-sensors-utils (= 1.0.0+250130+rel1.2+testapps-0ubuntu4),
+         qcom-sensors-lookup (= 1.0.0+250130+rel1.2+testapps-0ubuntu4),
+         qcom-adreno-cl1 (= 1.855.3+rev2+repack1),
+         qcom-property-vault (= 1.1.0-0ubuntu1),
+         tachyon-firmware-dragonwing-compat
+Conflicts: camx-kt, chicdk-kt, camxlib-kt
+Description: CamX hardware-ISP camera integration for Tachyon (QCM6490, experimental)
+ Wires up the vendor CamX stack so the IMX519 runs through the hardware ISP
+ (CSIPHY -> CSID -> IFE -> IPE) instead of the RAW-only upstream camss path.
+ AE, AWB, AF and lens shading all work; the kernel needs no changes, as the
+ Qualcomm camera KMD already ships in the Canonical-maintained tree.
+ .
+ Covers both camera connectors. CSI1 and CSI2 each get their own overlay and
+ sensor profile, and the two may be enabled together for dual-camera use.
+ Note that CSI2 shares its connector with DSI, so using it costs the panel.
+ .
+ Contents:
+   * per-SoC layout - /usr/lib/hw, /usr/lib/camera and 153 /usr/lib/*.so*
+     links into /usr/lib/qcm6490, shipped as package payload so dpkg owns them
+   * sensor description binaries for the CSI1 and CSI2 4-lane profiles
+   * both DT overlays, staged under /usr/share/tachyon/dtbo. The package never
+     touches /boot/dtb_a - deploying an overlay stays a user decision
+   * camx-enum / camx-capture as smoke-test clients
+ .
+ The stock com.qti.sensorsocmap.socid_map.bin from qcom-chicdk-qcm6490 is taken
+ over with dpkg-divert, so a later chicdk upgrade cannot silently restore it and
+ drop the IMX519 from enumeration.
+ .
+ EXPERIMENTAL - this delivers the HAL3 interface only. Ordinary V4L2 clients
+ (Cheese, ffmpeg, OpenCV) need a HAL3-to-V4L2 bridge that is not part of this
+ package. Image tuning is borrowed from another module and is not calibrated
+ for this one; auto-exposure visibly hunts as a result.

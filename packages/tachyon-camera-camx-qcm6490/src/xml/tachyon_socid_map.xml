@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--========================================================================-->
+<!-- Copyright (c) 2024 Qualcomm Technologies, Inc.                         -->
+<!-- All Rights Reserved.                                                   -->
+<!-- Confidential and Proprietary - Qualcomm Technologies, Inc.             -->
+<!--========================================================================-->
+<sensorBinSocIdMap
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="..\..\..\api\sensor\camxsocidbinmap.xsd">
+  <module_version major_revision="1" minor_revision="0" incr_revision="0"/>
+  <!--Sensor to SOC ID Mapping Table -->
+  <!--sensorBinSocIdMap -->
+  <socIdInfo>
+     <!--SOC ID or list of SOC Ids comma seperated-->
+     <socId>QCM6490</socId>
+     <!--List of bin files associated to this socId -->
+     <!-- Both connectors are listed unconditionally. This is a whitelist, not
+          an inventory: CamX probes each entry and skips the ones whose device
+          tree nodes are absent, which is how the stock Qualcomm entries below
+          (imx476, ov9282, ...) coexist on a board that has none of them. So a
+          single socid_map serves any combination - CSI1 only, CSI2 only, or
+          both - and which one actually comes up is decided purely by which
+          dtbo the user enabled in overlays.txt. -->
+     <binName>tachyon_imx519_csi1_4lane</binName>
+     <binName>tachyon_imx519_csi2_4lane</binName>
+     <binName>qti_tpg2</binName>
+     <binName>qti_tpg3</binName>
+     <binName>sunny_imx476</binName>
+     <binName>sunny_imx481</binName>
+     <binName>sunny_imx586</binName>
+     <binName>sunny_s5k3m5</binName>
+     <binName>sunny_imx686</binName>
+     <binName>cmk_imx577_cam2</binName>
+     <binName>cmk_imx577_cam3</binName>
+     <binName>cmk_imx577_cam1</binName>
+     <binName>cmk_ov9282_cam0a</binName>
+     <binName>cmk_ov9282_cam0b</binName>
+     <binName>cmk_ov9282_cam1</binName>
+     <binName>leopard_max9296a_ar0231_gmsl0</binName>
+     <binName>leopard_max9296a_ar0231_gmsl1</binName>
+     <binName>leopard_max9296a_ar0231_gmsl2</binName>
+     <binName>leopard_max9296a_ar0231_gmsl3</binName>
+  </socIdInfo>
+  <!-- /sensorBinSocIdMap -->
+</sensorBinSocIdMap>

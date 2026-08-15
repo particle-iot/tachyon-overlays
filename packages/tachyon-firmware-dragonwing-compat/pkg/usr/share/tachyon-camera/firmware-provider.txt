@@ -1,0 +1,45 @@
+tachyon-firmware-dragonwing-compat
+==================================
+
+This package exists only to satisfy the linux-firmware-dragonwing dependency
+declared by qcom-fastrpc1, which the CamX camera stack pulls in.
+
+It provides no firmware. The actual blobs come from:
+
+  tachyon-firmware        symlinks under /lib/firmware/updates into /vendor
+  add-qcm6490-bp-fw       adsp / cdsp / qupv3 firmware for QCM6490
+  /vendor                 core_nhlos_a, mounted read-only from the initramfs
+                          before the consuming drivers probe
+
+Why the upstream package must not be installed
+----------------------------------------------
+linux-firmware-dragonwing ships 381 files under /lib/firmware/updates, a path
+the kernel searches ahead of /lib/firmware. It would therefore shadow the
+Particle-tuned blobs regardless of any Replaces relationship.
+
+The wifi adapter is PCI 17cb:1103 and the driver requests it as qca6698aq
+hw2.1:
+
+  ath11k_pci 0000:01:00.0: qca6698aq hw2.1
+  ... from ath11k/QCA6698AQ/hw2.1/board-2.bin
+
+Both packages populate that name, in opposite directions:
+
+  tachyon-firmware   QCA6698AQ -> WCN6855, whose contents are symlinks into
+                     /vendor/wlan (read-only BP partition)
+  dragonwing         real WCN6855/hw2.1/* files, plus QCA6698AQ -> WCN6855
+
+Since both own the WCN6855 path, a plain install stops there with a file
+conflict. Forced through, the live QCA6698AQ requests would resolve to
+dragonwing's blobs instead of the Particle ones - and losing wifi means losing
+the only remote access to the device.
+
+Recovery, if it ever gets installed anyway
+------------------------------------------
+The real firmware lives on the read-only /vendor partition and cannot be
+destroyed, so reinstalling tachyon-firmware (or re-running the
+link-ath11k-firmware overlay, which recreates the QCA6698AQ/hw2.1 links into
+/vendor/wlan) restores it.
+
+That is cold comfort in practice: if wifi is already down, doing so requires
+physical access over USB or serial. Prevention via Conflicts is the point.

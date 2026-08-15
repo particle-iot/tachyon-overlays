@@ -1,0 +1,4 @@
+# CamX writes its parsed-sensor cache here. Create it up front with group
+# ownership rather than letting CamX create it on its first run as root, which
+# would leave a root-only directory that non-root clients cannot use.
+d /var/cache/camera 0775 root video -
