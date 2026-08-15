@@ -1,0 +1,52 @@
+#!/bin/sh
+# Undo what preinst set up.
+#
+# Only the diversion needs undoing: every file and symlink this package
+# installs is part of its payload, so dpkg removes them itself. Removing them
+# by hand would risk deleting paths dpkg still accounts for.
+#
+# abort-install matters as much as remove. If unpack fails after preinst has
+# already diverted, dpkg calls us with abort-install and the stock socid_map is
+# sitting at .distrib with nothing installed in its place - the diversion has
+# to come off, or the camera stack is left with no sensor map at all.
+set -e
+
+SOCID=/usr/lib/qcm6490/camera/com.qti.sensorsocmap.socid_map.bin
+PKG=tachyon-camera-camx-qcm6490
+
+# Three distinct states, and "|| true" would paper over the one that matters.
+# A diversion left behind means the stock socid_map stays parked at .distrib
+# with nothing in its place - the camera stack loses its sensor map entirely,
+# and the next install of this package trips its own preinst guard.
+undivert() {
+    holder=$(dpkg-divert --listpackage "$SOCID" 2>/dev/null || true)
+    case "$holder" in
+        "")
+            # No diversion - preinst never ran, or it is already undone.
+            ;;
+        "$PKG")
+            dpkg-divert --package "$PKG" --remove --rename \
+                        --divert "${SOCID}.distrib" "$SOCID"
+            ;;
+        *)
+            echo "$SOCID is diverted by '$holder', not $PKG - leaving it alone" >&2
+            echo "  the stock sensor map may need restoring by hand" >&2
+            exit 1
+            ;;
+    esac
+}
+
+case "$1" in
+remove|purge|disappear|abort-install)
+    undivert
+    ;;
+upgrade|failed-upgrade|abort-upgrade)
+    # Keep the diversion across upgrades; the incoming version re-asserts it.
+    ;;
+esac
+
+# CamX caches parsed sensor descriptions; a stale cache survives package
+# changes and makes the camera list look unchanged after install/remove.
+rm -rf /var/cache/camera/*.bin /var/cache/camera/camxcache* 2>/dev/null || true
+
+exit 0

@@ -1,0 +1,36 @@
+Package: tachyon-firmware-dragonwing-compat
+Version: 1.0~tachyon3
+Architecture: all
+Maintainer: Tachyon Platform <eugene@particle.io>
+Section: misc
+Priority: optional
+Provides: linux-firmware-dragonwing (= 1.0.0+20260126)
+Conflicts: linux-firmware-dragonwing
+Depends: tachyon-firmware
+Description: Satisfy the linux-firmware-dragonwing dependency without shadowing platform firmware
+ qcom-fastrpc1 - pulled in by the CamX camera stack - depends on
+ linux-firmware-dragonwing. That upstream package ships 571 files, 381 of them
+ under /lib/firmware/updates, a path the kernel searches ahead of
+ /lib/firmware. Installing it would shadow the Particle-tuned blobs even
+ without a Replaces relationship.
+ .
+ The wifi adapter here is PCI 17cb:1103 and the driver asks for it as
+ qca6698aq hw2.1, loading from ath11k/QCA6698AQ/hw2.1/. Both packages populate
+ that name, but in opposite directions:
+ .
+   tachyon-firmware   QCA6698AQ -> WCN6855, whose contents are symlinks into
+                      /vendor/wlan on the read-only BP partition
+   dragonwing         real WCN6855/hw2.1/* files, plus QCA6698AQ -> WCN6855
+ .
+ Because both own the WCN6855 path, a plain install stops there with a file
+ conflict. Forced through, the active QCA6698AQ requests would resolve to
+ dragonwing's WCN6855 blobs instead of the Particle ones - and losing wifi
+ means losing the only remote access to the board.
+ .
+ fastrpc only needs the CDSP firmware, which the board already carries. This
+ package satisfies the dependency and declares Conflicts so the upstream
+ package can never be co-installed, keeping tachyon-firmware the sole provider.
+ .
+ It ships no firmware of its own. The blobs come from tachyon-firmware and the
+ add-qcm6490-bp-fw overlay, and /vendor must be mounted from the initramfs
+ before the consuming drivers probe.

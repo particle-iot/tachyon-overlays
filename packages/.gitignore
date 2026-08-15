@@ -1,0 +1,3 @@
+# Build output. The copies that actually ship are committed under
+# overlays/<name>/files/ - keeping a second one here would let the two drift.
+*.deb

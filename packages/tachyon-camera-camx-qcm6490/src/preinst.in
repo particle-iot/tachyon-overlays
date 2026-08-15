@@ -1,0 +1,67 @@
+#!/bin/sh
+# Take ownership of the stock socid_map before dpkg unpacks ours.
+#
+# com.qti.sensorsocmap.socid_map.bin belongs to qcom-chicdk-qcm6490. Diverting
+# it from postinst would be too late: dpkg hits the file conflict while
+# unpacking this package. Registering the diversion here moves the stock file
+# to .distrib first, so our unpack lands cleanly and a later chicdk upgrade
+# writes to the diverted path instead of clobbering us.
+#
+# Order matters. Every target is checked BEFORE the diversion is created - if a
+# check fails after diverting, the stock socid_map would be left renamed to
+# .distrib while the package never installs, leaving the system with neither.
+#
+# Generated from src/preinst.in: the placeholder below is expanded at build
+# time with one check per managed path, because the manifest file itself is
+# not on disk yet when preinst runs.
+set -e
+
+SOCID=/usr/lib/qcm6490/camera/com.qti.sensorsocmap.socid_map.bin
+PKG=tachyon-camera-camx-qcm6490
+
+# A path we are about to own is acceptable only if it is absent, already ours,
+# or a symlink that already points exactly where ours will. Anything else -
+# a foreign regular file, a link to somewhere else, a dangling link - is a
+# conflict we refuse to paper over.
+fail=0
+check_one() {
+    link=$1
+    want=$2
+
+    if [ -L "$link" ]; then
+        have=$(readlink "$link")
+        if [ "$have" != "$want" ]; then
+            echo "ERROR: $link points at $have, expected $want" >&2
+            fail=1
+        fi
+        return 0
+    fi
+
+    [ -e "$link" ] || return 0
+
+    owner=$(dpkg -S "$link" 2>/dev/null | cut -d: -f1 || true)
+    if [ "$owner" != "$PKG" ]; then
+        echo "ERROR: $link exists as a regular file (owner: ${owner:-none})" >&2
+        fail=1
+    fi
+    return 0
+}
+
+case "$1" in
+install|upgrade)
+    @SYMLINK_CHECKS@
+
+    if [ "$fail" -ne 0 ]; then
+        echo "Refusing to install: resolve the conflicts above first." >&2
+        exit 1
+    fi
+
+    dpkg-divert --package "$PKG" --add --rename \
+                --divert "${SOCID}.distrib" "$SOCID"
+    ;;
+abort-upgrade)
+    # The diversion belongs to the version staying behind; leave it alone.
+    ;;
+esac
+
+exit 0

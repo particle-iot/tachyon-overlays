@@ -1,0 +1,34 @@
+//This file supports comments - they are stripped out before the JSON file is parsed
+{
+    "name": "ubuntu-desktop-camx-24.04",
+    "description": "Desktop image with the vendor CamX camera stack (hardware ISP) instead of the RAW-only upstream camss path. OPT-IN: build this stack explicitly, it is not part of ubuntu-desktop-24.04.",
+    "steps": [
+      {
+        "type": "stack",
+        "name": "ubuntu-desktop-24.04"
+      },
+      //NOTE:
+      // Deliberately kept out of ubuntu-common/desktop-24.04.
+      //
+      // 1. A CamX overlay and an upstream camss overlay are mutually exclusive
+      //    - they claim the same CSIPHY/CSID/VFE registers. Shipping CamX by
+      //    default would take the RAW camss path away from every image.
+      //    (The two CamX overlays, CSI1 and CSI2, do coexist - that is how the
+      //    dual-camera configuration works.)
+      // 2. This is EXPERIMENTAL and delivers HAL3 only. Ordinary V4L2 clients
+      //    (Cheese, ffmpeg, OpenCV) cannot use it without a bridge that is not
+      //    part of this stack.
+      // 3. Both profiles are pinned to 4-lane. A 2-lane module needs a
+      //    different bin and is not supported: CamX matches on chip ID, which
+      //    every IMX519 variant reports identically, so the wrong lane count
+      //    probes fine and only fails at StreamOn.
+      //
+      // The overlay only stages the DT overlay under /usr/share/tachyon/dtbo;
+      // deploying it to /boot/dtb_a and editing overlays.txt stays a user
+      // decision. See /usr/share/doc/tachyon-camera-camx-qcm6490/README.md.
+      {
+        "type": "overlay",
+        "name": "add-camera-camx"
+      }
+    ]
+}
