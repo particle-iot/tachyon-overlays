@@ -16,7 +16,8 @@ Depends: qcom-camx-qcm6490 (= 1.0.6+repack2),
          qcom-sensors-lookup (= 1.0.0+250130+rel1.2+testapps-0ubuntu4),
          qcom-adreno-cl1 (= 1.855.3+rev2+repack1),
          qcom-property-vault (= 1.1.0-0ubuntu1),
-         tachyon-firmware-dragonwing-compat
+         tachyon-firmware-dragonwing-compat,
+         v4l2loopback-modules | v4l2loopback-dkms
 Conflicts: camx-kt, chicdk-kt, camxlib-kt
 Description: CamX hardware-ISP camera integration for Tachyon (QCM6490, experimental)
  Wires up the vendor CamX stack so the IMX519 runs through the hardware ISP
@@ -40,7 +41,18 @@ Description: CamX hardware-ISP camera integration for Tachyon (QCM6490, experime
  over with dpkg-divert, so a later chicdk upgrade cannot silently restore it and
  drop the IMX519 from enumeration.
  .
- EXPERIMENTAL - this delivers the HAL3 interface only. Ordinary V4L2 clients
- (Cheese, ffmpeg, OpenCV) need a HAL3-to-V4L2 bridge that is not part of this
- package. Image tuning is borrowed from another module and is not calibrated
- for this one; auto-exposure visibly hunts as a result.
+ Ordinary V4L2 clients are served through camx-v4l2-bridge, which holds the
+ HAL3 camera open and republishes frames on a v4l2loopback node. That is what
+ the v4l2loopback dependency is for, and it is an alternative because the
+ module can arrive two ways: built into the kernel package, which is the
+ intent and needs arch=arm64 in its dkms-versions entry, or compiled locally
+ by v4l2loopback-dkms. Declaring it here turns a missing module from a service
+ that fails at runtime into an install that refuses up front.
+ .
+ EXPERIMENTAL. The tuning data is calibrated for a Sunny IMX519 on SM8250 and
+ lacks several blocks the HAL looks for - tmc13_sw and AANR_ATF among them -
+ so noise reduction and tone mapping are skipped and images are softer than
+ the sensor can manage. Tuning built for the module on this board is the fix.
+ The auto-exposure hunting reported earlier was a different problem: the module
+ fitted at the time did not match this tuning at all, and it went away once the
+ right one was installed.
