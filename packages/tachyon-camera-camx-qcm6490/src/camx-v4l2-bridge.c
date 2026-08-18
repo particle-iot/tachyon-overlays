@@ -23,6 +23,8 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <getopt.h>
+#include <dirent.h>   /* walking /proc to spot a consumer on the sink */
+#include <limits.h>   /* PATH_MAX */
 
 /* Set from the signal handler; only ever written with a plain store. */
 static volatile sig_atomic_t g_stop;
@@ -46,6 +48,91 @@ static void on_signal(int sig)
 /* Selected by --format; NV12 is what the loopback has always carried. */
 static int g_fourcc = V4L2_PIX_FMT_NV12;
 static const char *g_fourcc_name = "NV12";
+
+/*
+ * Idle throttling.
+ *
+ * The bridge runs from boot so the camera is there when someone opens it, and
+ * left alone it costs a whole core the entire time - roughly 100% with nobody
+ * watching. Two thirds of that is CamX: its worker threads run per capture
+ * request, and this loop hands a buffer straight back after every frame, so
+ * the HAL never gets a chance to be idle.
+ *
+ * Nothing about HAL3 requires that. Requests are submitted at whatever rate
+ * the client wants, which is how a phone idles a preview. So when no consumer
+ * has the node open, slow down: the pipeline keeps running and the node keeps
+ * its capture capability, at a fraction of the work.
+ *
+ * It cannot stop entirely. With exclusive_caps=1 the node advertises capture
+ * only once a frame has been written, so a bridge that idles to zero is a
+ * camera nothing can discover.
+ */
+#define IDLE_FPS        2          /* while nobody is looking */
+#define IDLE_AFTER_SEC  3          /* grace before slowing down */
+
+/*
+ * Is anyone other than us holding the sink open?
+ *
+ * v4l2loopback publishes max_openers but not a current count, so this walks
+ * /proc. At one check per second the cost does not register against the
+ * per-frame work it is deciding about.
+ */
+static int sink_has_consumer(const char *sink_path)
+{
+	char target[PATH_MAX];
+	ssize_t tn = readlink(sink_path, target, sizeof(target) - 1);
+	if (tn < 0) return 1;   /* cannot tell - assume watched, never throttle blindly */
+	target[tn] = '\0';
+
+	/*
+	 * The symlink resolves to /dev/videoN, and that absolute path is what
+	 * /proc/<pid>/fd entries point at. udev writes it relative, so make it
+	 * absolute. The name is a device node, far short of the buffer, but the
+	 * length is checked rather than assumed.
+	 */
+	const char *node = target;
+	static char abs[PATH_MAX];
+	if (target[0] != '/') {
+		if ((size_t)tn + sizeof("/dev/") > sizeof(abs)) return 1;
+		memcpy(abs, "/dev/", 5);
+		memcpy(abs + 5, target, (size_t)tn + 1);
+		node = abs;
+	}
+
+	DIR *proc = opendir("/proc");
+	if (!proc) return 1;
+
+	const pid_t self = getpid();
+	int found = 0;
+	struct dirent *de;
+	while (!found && (de = readdir(proc))) {
+		if (de->d_name[0] < '0' || de->d_name[0] > '9') continue;
+		pid_t pid = (pid_t)atoi(de->d_name);
+		if (pid == self) continue;
+
+		char fddir[64];
+		snprintf(fddir, sizeof(fddir), "/proc/%d/fd", pid);
+		DIR *fds = opendir(fddir);
+		if (!fds) continue;   /* gone, or not ours to look at */
+
+		struct dirent *fe;
+		while ((fe = readdir(fds))) {
+			if (fe->d_name[0] == '.') continue;
+			char link[64 + NAME_MAX + 2], buf[PATH_MAX];
+			snprintf(link, sizeof(link), "%s/%s", fddir, fe->d_name);
+			ssize_t n = readlink(link, buf, sizeof(buf) - 1);
+			if (n < 0) continue;
+			buf[n] = '\0';
+			if (strcmp(buf, node) == 0 || strcmp(buf, sink_path) == 0) {
+				found = 1;
+				break;
+			}
+		}
+		closedir(fds);
+	}
+	closedir(proc);
+	return found;
+}
 
 static int v4l2_open_sink(const char *path, int w, int h, size_t frame_sz)
 {
@@ -326,6 +413,10 @@ int main(int argc, char **argv)
 	unsigned long pushed = 0, dropped = 0;
 	int consecutive_timeouts = 0;
 
+	/* Idle throttling state; see the notes above sink_has_consumer(). */
+	struct timespec last_check = t0, last_seen = t0;
+	int idle = 0;
+
 	while (!g_stop) {
 		struct timespec ts;
 		clock_gettime(CLOCK_REALTIME, &ts);
@@ -430,7 +521,46 @@ int main(int argc, char **argv)
 			       pushed, dropped, el > 0 ? pushed / el : 0.0);
 		}
 
-		/* Hand the buffer straight back so the pipeline never runs dry. */
+		/*
+		 * Decide whether anyone is watching, once a second. Checking per
+		 * frame would put a /proc walk on the hot path for no benefit -
+		 * a consumer appearing half a second late costs nothing, since
+		 * the pipeline is already warm and the next full-rate frame is
+		 * 33 ms away.
+		 */
+		struct timespec now;
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		if (now.tv_sec != last_check.tv_sec) {
+			last_check = now;
+			if (sink_has_consumer(sink_path)) {
+				last_seen = now;
+				if (idle) {
+					idle = 0;
+					printf("consumer attached, full rate\n");
+					fflush(stdout);
+				}
+			} else if (!idle && now.tv_sec - last_seen.tv_sec >= IDLE_AFTER_SEC) {
+				idle = 1;
+				printf("no consumer, throttling to %d fps\n", IDLE_FPS);
+				fflush(stdout);
+			}
+		}
+
+		/*
+		 * Throttle by delaying the resubmit rather than by dropping
+		 * frames. CamX only works when a request is outstanding, so
+		 * spacing the requests out is what actually saves the power;
+		 * skipping our own conversion would leave the HAL running flat
+		 * out for nobody.
+		 */
+		if (idle) {
+			struct timespec nap = { .tv_sec = 0,
+			                        .tv_nsec = 1000000000L / IDLE_FPS };
+			nanosleep(&nap, NULL);
+			if (g_stop) break;
+		}
+
+		/* Hand the buffer back so the pipeline never runs dry. */
 		struct camera3_capture_request req;
 		memset(&req, 0, sizeof(req));
 		req.frame_number = next_frame++;
