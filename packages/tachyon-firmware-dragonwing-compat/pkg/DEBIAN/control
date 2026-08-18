@@ -1,10 +1,10 @@
 Package: tachyon-firmware-dragonwing-compat
-Version: 1.0~tachyon3
+Version: 1.0~tachyon4
 Architecture: all
 Maintainer: Tachyon Platform <eugene@particle.io>
 Section: misc
 Priority: optional
-Provides: linux-firmware-dragonwing (= 1.0.0+20260126)
+Provides: linux-firmware-dragonwing (= 9999.0.0)
 Conflicts: linux-firmware-dragonwing
 Depends: tachyon-firmware
 Description: Satisfy the linux-firmware-dragonwing dependency without shadowing platform firmware
