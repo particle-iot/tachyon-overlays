@@ -1,0 +1,50 @@
+#!/bin/bash
+# Tell udev the loopback node changed once it is actually producing frames.
+#
+# Without this the node exists but desktop apps report "no camera found", and
+# the only way through it is running udevadm and restarting the user's PipeWire
+# by hand after every start of this service.
+#
+# The cause is in the interaction between exclusive_caps=1 and how consumers
+# discover cameras. The node appears the moment the module loads, but until a
+# producer has written a frame it advertises OUTPUT only - no capture. udev
+# reads its capabilities at that moment and caches them in
+# ID_V4L_CAPABILITIES, WirePlumber sees a device with no capture support and
+# skips it, and nothing re-examines it later: the capabilities change when the
+# first frame lands, but that is not an event anything is watching.
+#
+# So wait for capture to appear, then raise the change event ourselves. udev
+# re-runs its rules, the property is refreshed, and WirePlumber picks the
+# device up the way it would for a webcam being plugged in.
+#
+# Runs as ExecStartPost. systemd waits for ExecStartPost to finish before it
+# considers the unit started, and the wait here can be a minute or more, so the
+# polling is forked off and this script returns immediately. The child stays in
+# the unit's cgroup and is cleaned up with it.
+#
+# It must not fail the unit either: the bridge is fine whether or not this
+# works, it only decides whether desktop apps notice, so every path exits 0.
+set -u
+
+DEVICE=${DEVICE:-/dev/tachyon-camera}
+
+announce() {
+    # CamX takes around 30 s to reach the first frame from cold on this board,
+    # and capture is only advertised once that frame has landed.
+    local _
+    for _ in $(seq 1 60); do
+        if v4l2-ctl -d "$DEVICE" --get-fmt-video >/dev/null 2>&1; then
+            udevadm trigger --action=change "$DEVICE" 2>/dev/null || true
+            udevadm settle --timeout=5 2>/dev/null || true
+            echo "camera ready, announced $DEVICE to udev"
+            return
+        fi
+        sleep 2
+    done
+    # The bridge may still be starting, or it failed for a reason its own log
+    # already explains; saying so beats silence.
+    echo "no frames from $DEVICE after 120s - desktop apps may not see it" >&2
+}
+
+announce &
+exit 0

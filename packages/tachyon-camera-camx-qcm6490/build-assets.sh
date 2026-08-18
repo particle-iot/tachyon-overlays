@@ -243,13 +243,16 @@ echo "== sensor plugin: libsync stripped, .text unchanged, output hash pinned ==
 # shipped asset has one recorded upstream.
 install -m 644 "$SRC_TUNING" assets/camera/
 
-# ---- smoke-test clients -------------------------------------------------
+# ---- HAL clients --------------------------------------------------------
 # They only dlopen the HAL, so they need no vendor headers and cross-compile
-# with the stock toolchain.
+# with the stock toolchain. camx-enum and camx-capture are smoke tests;
+# camx-v4l2-bridge is the daemon that feeds a v4l2loopback node. All three
+# share camx-hal.h, so building them together is what keeps that ABI honest -
+# leaving the bridge out of this loop is how it drifted and regressed once.
 CC=${CC:-aarch64-linux-gnu-gcc}
 command -v "$CC" >/dev/null || { echo "$CC not found" >&2; exit 1; }
 install -d -m 755 assets/tools
-for t in camx-enum camx-capture; do
+for t in camx-enum camx-capture camx-v4l2-bridge; do
     "$CC" -O2 -Wall -Wextra -o "assets/tools/$t" "src/$t.c" -ldl -lpthread
 done
 echo "== tools built with $("$CC" -dumpversion) =="

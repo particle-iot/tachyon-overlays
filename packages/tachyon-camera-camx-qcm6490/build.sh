@@ -24,6 +24,10 @@ MANIFEST=manifest/usr-lib-symlinks.txt
 # ---- payload ----------------------------------------------------------
 mkdir -p "$STAGE/DEBIAN" "$STAGE/usr/lib" "$STAGE/usr/share/tachyon-camera"
 cp pkg/DEBIAN/control "$STAGE/DEBIAN/"
+# Config under /etc that the operator is expected to edit. Without this list
+# dpkg treats them as ordinary payload and silently overwrites local changes
+# on every upgrade.
+cp pkg/DEBIAN/conffiles "$STAGE/DEBIAN/"
 
 # per-SoC layout: CamX hardcodes /usr/lib/hw and /usr/lib/camera
 ln -sfn qcm6490/hw     "$STAGE/usr/lib/hw"
@@ -55,7 +59,7 @@ com.qti.sensor.imx519.so
 com.qti.tuned.sunny_imx519.bin"
 REQUIRED_DTBO="combined-dtb-vendor-camera-imx519-csi1-4lane.dtbo
 combined-dtb-vendor-camera-imx519-csi2-4lane.dtbo"
-REQUIRED_TOOLS="camx-enum camx-capture"
+REQUIRED_TOOLS="camx-enum camx-capture camx-v4l2-bridge"
 
 for f in $REQUIRED_CAMERA; do
     [ -f "assets/camera/$f" ] || { echo "missing asset: assets/camera/$f" >&2; exit 1; }
@@ -125,6 +129,39 @@ echo "staged $(ls -1 assets/camera | wc -l) camera assets, $(ls -1 assets/tools 
 install -d -m 755 "$STAGE/usr/lib/tmpfiles.d"
 install -m 644 src/tachyon-camera.tmpfiles "$STAGE/usr/lib/tmpfiles.d/tachyon-camera.conf"
 
+# ---- V4L2 bridge integration -------------------------------------------
+# The bridge binary itself came in with assets/tools above. What follows is
+# everything needed to run it as a service. The unit is NOT enabled here: the
+# bridge holds the camera open exclusively, so turning it on is a deliberate
+# act. Shipping it disabled costs a HAL3-only user nothing.
+install -d -m 755 "$STAGE/usr/libexec"
+install -m 755 src/tachyon-camera-bridge-start "$STAGE/usr/libexec/tachyon-camera-bridge-start"
+# Re-announces the node to udev once frames are flowing; without it desktop
+# apps report "no camera found" until someone runs udevadm by hand.
+install -m 755 src/tachyon-camera-notify-ready "$STAGE/usr/libexec/tachyon-camera-notify-ready"
+install -d -m 755 "$STAGE/lib/systemd/system"
+install -m 644 src/tachyon-camera-bridge.service "$STAGE/lib/systemd/system/tachyon-camera-bridge.service"
+install -d -m 755 "$STAGE/etc/default"
+install -m 644 src/tachyon-camera-bridge.default "$STAGE/etc/default/tachyon-camera-bridge"
+install -d -m 755 "$STAGE/etc/modprobe.d"
+install -m 644 src/tachyon-v4l2loopback.conf "$STAGE/etc/modprobe.d/tachyon-v4l2loopback.conf"
+install -d -m 755 "$STAGE/lib/udev/rules.d"
+install -m 644 src/60-tachyon-camera.rules "$STAGE/lib/udev/rules.d/60-tachyon-camera.rules"
+
+# CamX settings. Conffile: the operator turns logging back on here when
+# chasing an image-quality problem, and an upgrade must not undo that.
+install -d -m 755 "$STAGE/var/cache/camera"
+install -m 644 src/camxoverridesettings.txt "$STAGE/var/cache/camera/camxoverridesettings.txt"
+
+# Bounds what the camera's log volume costs in flash. Conffile for the same
+# reason.
+install -d -m 755 "$STAGE/etc/systemd/journald.conf.d"
+install -m 644 src/90-tachyon-camera-journald.conf \
+    "$STAGE/etc/systemd/journald.conf.d/90-tachyon-camera-journald.conf"
+
+# Hardware-encoded recording, for when Snapshot's software VP8 is too soft.
+install -m 755 src/tachyon-camera-record "$STAGE/usr/bin/tachyon-camera-record"
+
 # ---- maintainer scripts ------------------------------------------------
 # Expand the manifest into explicit check_one calls. Each carries the expected
 # target so preinst can tell "an old hand-made link we can adopt" from "a link
@@ -137,8 +174,9 @@ checks=$(
 awk -v repl="$checks" '{ if ($0 ~ /@SYMLINK_CHECKS@/) print repl; else print }' \
     src/preinst.in > "$STAGE/DEBIAN/preinst"
 cp src/postinst "$STAGE/DEBIAN/postinst"
+cp src/prerm    "$STAGE/DEBIAN/prerm"
 cp src/postrm   "$STAGE/DEBIAN/postrm"
-chmod 755 "$STAGE/DEBIAN/preinst" "$STAGE/DEBIAN/postinst" "$STAGE/DEBIAN/postrm"
+chmod 755 "$STAGE/DEBIAN/preinst" "$STAGE/DEBIAN/postinst" "$STAGE/DEBIAN/prerm" "$STAGE/DEBIAN/postrm"
 
 # Normalise modes before packing. mktemp -d gives 0700 and the caller's umask
 # leaks into everything created under it, so without this the package would
@@ -146,8 +184,11 @@ chmod 755 "$STAGE/DEBIAN/preinst" "$STAGE/DEBIAN/postinst" "$STAGE/DEBIAN/postrm
 # -type d/f never match symlinks, so the 153 links are left alone.
 find "$STAGE" -type d -exec chmod 755 {} +
 find "$STAGE" -type f -exec chmod 644 {} +
-chmod 755 "$STAGE/DEBIAN/preinst" "$STAGE/DEBIAN/postinst" "$STAGE/DEBIAN/postrm"
+chmod 755 "$STAGE/DEBIAN/preinst" "$STAGE/DEBIAN/postinst" "$STAGE/DEBIAN/prerm" "$STAGE/DEBIAN/postrm"
 chmod 755 "$STAGE"/usr/bin/*
+# The blanket 644 above catches this one too, and a non-executable ExecStart
+# fails the unit at start with a bare 203/EXEC.
+chmod 755 "$STAGE"/usr/libexec/*
 
 ver=$(awk '/^Version:/ {print $2}' pkg/DEBIAN/control)
 deb="$OUT/tachyon-camera-camx-qcm6490_${ver}_arm64.deb"
