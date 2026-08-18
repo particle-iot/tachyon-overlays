@@ -1,0 +1,27 @@
+#!/bin/sh
+# Hand the path back to the distribution's package.
+#
+# Order matters and is the reverse of postinst: our file has to go first, then
+# the diversion. Removing the diversion while our file is still there makes
+# dpkg refuse to move the original back, and the path ends up owned by nobody
+# with the patched plugin still in place.
+set -e
+
+PLUGIN=/usr/lib/aarch64-linux-gnu/gstreamer-1.0/libgstpipewire.so
+DIVERT="$PLUGIN.distrib"
+
+case "$1" in
+remove|deconfigure)
+    rm -f "$PLUGIN"
+    dpkg-divert --package tachyon-gst-pipewire-camfix --remove --rename \
+        --divert "$DIVERT" "$PLUGIN" >/dev/null 2>&1 || true
+
+    rm -f /root/.cache/gstreamer-1.0/registry.*.bin 2>/dev/null || true
+    for home in /home/*; do
+        [ -d "$home/.cache/gstreamer-1.0" ] || continue
+        rm -f "$home"/.cache/gstreamer-1.0/registry.*.bin 2>/dev/null || true
+    done
+    ;;
+esac
+
+exit 0
