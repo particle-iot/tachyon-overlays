@@ -1,0 +1,56 @@
+[Unit]
+Description=Tachyon CamX to V4L2 bridge
+Documentation=file:/usr/share/doc/tachyon-camera-camx-qcm6490/README.md
+# The bridge dlopen()s the CamX HAL, which needs the camera kernel driver and
+# the vendor firmware mounts to be in place.
+After=local-fs.target systemd-udev-settle.service
+Wants=systemd-udev-settle.service
+
+# A restart loop is the expected outcome when the camera overlay is not
+# deployed or the module is missing, so bound it instead of hammering the HAL.
+# These two belong in [Unit], not [Service] - systemd silently ignores them
+# in [Service] and the limit never applies.
+#
+# The window has to outlast the retry spacing below, or the limit trips while
+# the retries are still legitimately waiting for CamX to let go.
+StartLimitIntervalSec=300
+StartLimitBurst=6
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/tachyon-camera-bridge
+
+ExecStart=/usr/libexec/tachyon-camera-bridge-start
+
+# The node advertises capture only after the first frame is written, and udev
+# cached its capabilities before that happened. Re-announce it once frames are
+# flowing, or desktop apps go on reporting "no camera found" until someone runs
+# udevadm by hand. Backgrounded so a slow camera start does not hold up the
+# unit's own startup.
+ExecStartPost=-/usr/libexec/tachyon-camera-notify-ready
+
+# CamX opens a lot of descriptors per pipeline; the default 1024 is not enough
+# once a second camera or a long-running session is involved.
+LimitNOFILE=4096
+
+# SIGTERM must be what stops this. A SIGKILL leaves v4l2loopback stuck in its
+# capture state and the next start fails until the module is reloaded, so give
+# the bridge room to finish its teardown - it exits in about a second.
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# CamX releases its CDSP/fastrpc session asynchronously, so an open() issued
+# immediately after the previous instance exits can fail. Measured on this
+# board: the camera is usable again 5 s after SIGTERM. `systemctl restart`
+# re-opens in well under a second, so its first attempt may still lose the
+# race - that is what the retry below is for.
+#
+# Deliberately NOT solved by delaying the stop: a cooldown there would make
+# `systemctl stop` and `dpkg remove` block for the same duration, punishing
+# the common case to smooth over a rare one. Restarting is infrequent and
+# recovers on its own; stopping should be immediate.
+Restart=on-failure
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

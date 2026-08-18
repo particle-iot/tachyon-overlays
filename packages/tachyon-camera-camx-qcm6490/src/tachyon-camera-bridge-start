@@ -1,0 +1,77 @@
+#!/bin/bash
+# Launcher for tachyon-camera-bridge.service.
+#
+# Everything here is a precondition check. They all hard-fail rather than
+# degrade: a bridge that starts against the wrong node or without the loopback
+# module produces a device that exists but never yields a frame, which is far
+# harder to diagnose than a service that refuses to start.
+#
+# Values arrive as environment variables from EnvironmentFile, so nothing here
+# sources or evaluates the config file.
+
+set -u
+
+CAMERA_ID=${CAMERA_ID:-0}
+WIDTH=${WIDTH:-1280}
+HEIGHT=${HEIGHT:-960}
+DEVICE=${DEVICE:-/dev/tachyon-camera}
+FORMAT=${FORMAT:-yuyv}
+CARD_LABEL="Tachyon CamX Bridge"
+BRIDGE=/usr/bin/camx-v4l2-bridge
+
+die() { echo "tachyon-camera-bridge: $*" >&2; exit 1; }
+
+# ---- config validation -------------------------------------------------
+[[ "$CAMERA_ID" =~ ^[0-9]+$ ]] || die "CAMERA_ID must be a non-negative integer, got '$CAMERA_ID'"
+[[ "$WIDTH"  =~ ^[0-9]+$ ]] || die "WIDTH must be a positive integer, got '$WIDTH'"
+[[ "$HEIGHT" =~ ^[0-9]+$ ]] || die "HEIGHT must be a positive integer, got '$HEIGHT'"
+(( WIDTH  >= 176 && WIDTH  <= 4608 )) || die "WIDTH $WIDTH outside 176..4608"
+(( HEIGHT >= 144 && HEIGHT <= 3456 )) || die "HEIGHT $HEIGHT outside 144..3456"
+case "$DEVICE" in
+    /dev/*) ;;
+    *) die "DEVICE must be under /dev, got '$DEVICE'" ;;
+esac
+case "$FORMAT" in
+    yuyv|nv12) ;;
+    *) die "FORMAT must be yuyv or nv12, got '$FORMAT'" ;;
+esac
+
+[[ -x "$BRIDGE" ]] || die "$BRIDGE missing - is tachyon-camera-camx-qcm6490 installed?"
+
+# ---- loopback module ---------------------------------------------------
+# Parameters live in /etc/modprobe.d/tachyon-v4l2loopback.conf so that a manual
+# modprobe gets the same settings as this one.
+# Always start from a freshly loaded module.
+#
+# With exclusive_caps=1 the node is incomplete until a producer has written to
+# it, and once a producer has opened it and failed, it stays wedged - even
+# VIDIOC_G_FMT then returns EINVAL and the next start cannot set its format.
+# Reloading is cheap and this service is the only producer, so take the clean
+# node rather than inheriting whatever state the last attempt left behind.
+if grep -q '^v4l2loopback ' /proc/modules; then
+    rmmod v4l2loopback 2>/dev/null || echo "note: v4l2loopback busy, reusing it" >&2
+    sleep 1
+fi
+if ! grep -q '^v4l2loopback ' /proc/modules; then
+    modprobe v4l2loopback || die "modprobe v4l2loopback failed - the module ships with the kernel package, check that the running kernel provides it"
+fi
+
+# ---- wait for the node and verify it is the right one ------------------
+udevadm settle --timeout=10 2>/dev/null || true
+
+for _ in $(seq 1 20); do
+    [[ -e "$DEVICE" ]] && break
+    sleep 0.5
+done
+[[ -c "$DEVICE" ]] || die "$DEVICE is not a character device (udev rule not applied?)"
+
+# The symlink is created by name, but a stale link from an earlier module load
+# can point at a node that is now something else entirely.
+node=$(readlink -f "$DEVICE")
+name_file="/sys/class/video4linux/$(basename "$node")/name"
+[[ -r "$name_file" ]] || die "cannot read $name_file for $DEVICE -> $node"
+actual=$(<"$name_file")
+[[ "$actual" == "$CARD_LABEL" ]] || die "$DEVICE points at '$actual', expected '$CARD_LABEL'"
+
+exec "$BRIDGE" --v4l2-output "$DEVICE" --camera "$CAMERA_ID" \
+     --size "${WIDTH}x${HEIGHT}" --format "$FORMAT"

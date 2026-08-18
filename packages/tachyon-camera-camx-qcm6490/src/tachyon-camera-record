@@ -1,0 +1,74 @@
+#!/bin/bash
+# Record from the CamX bridge using the hardware encoder.
+#
+# GNOME Snapshot can take photos from this camera perfectly well, but its
+# recordings are soft: video-format is a single-valued enum ('vp8webm'), the
+# VPU on this part encodes only H.264 and HEVC and cannot even decode VP8, so
+# Snapshot always falls back to software vp8enc at its default 256 kbps target.
+# Measured on this board, a Snapshot clip came out at 441 kbps while the same
+# scene through the VPU ran at 7970 kbps - eighteen times the bitrate, and the
+# difference is obvious. None of that is configurable from the app.
+#
+# So this exists for when the recording has to look right.
+#
+# Usage:  tachyon-camera-record [seconds] [output]
+#   tachyon-camera-record                    10 s to ~/Videos
+#   tachyon-camera-record 30 /tmp/clip.mp4
+set -u
+
+SECS=${1:-10}
+OUT=${2:-$HOME/Videos/tachyon-$(date +%Y%m%d-%H%M%S).mp4}
+DEV=${DEVICE:-/dev/tachyon-camera}
+BITRATE=${BITRATE:-8000000}
+
+[[ "$SECS" =~ ^[0-9]+$ ]] || { echo "seconds must be an integer" >&2; exit 2; }
+[[ -c "$DEV" ]] || { echo "$DEV missing - is tachyon-camera-bridge running?" >&2; exit 1; }
+
+command -v gst-launch-1.0 >/dev/null || { echo "gst-launch-1.0 not found" >&2; exit 1; }
+gst-inspect-1.0 v4l2h264enc >/dev/null 2>&1 || {
+    echo "no hardware H.264 encoder - is the video codec driver loaded?" >&2
+    exit 1
+}
+
+# Take the geometry the bridge is actually publishing rather than assuming it;
+# it is configurable in /etc/default/tachyon-camera-bridge.
+read -r W H < <(v4l2-ctl -d "$DEV" --get-fmt-video 2>/dev/null |
+                sed -nE 's#.*Width/Height *: *([0-9]+)/([0-9]+).*#\1 \2#p')
+[[ -n "${W:-}" && -n "${H:-}" ]] || { echo "cannot read format from $DEV" >&2; exit 1; }
+
+# The node publishes YUYV (see FORMAT in /etc/default/tachyon-camera-bridge -
+# desktop apps mishandle NV12 from it), while the encoder takes NV12. Convert
+# rather than pinning the source caps to NV12, which is what an earlier version
+# did: it failed outright whenever the bridge was configured for YUYV.
+#
+# h264parse and a container are deliberately not required. Both live in
+# gstreamer1.0-plugins-bad, which is not on this image, and pulling it in
+# through apt on this board has caused more trouble than it solved. A raw
+# Annex-B stream plays in VLC and mpv as-is; remux later if a container is
+# wanted:
+#     ffmpeg -r 30 -i clip.h264 -c:v copy clip.mp4
+if gst-inspect-1.0 h264parse >/dev/null 2>&1 && gst-inspect-1.0 mp4mux >/dev/null 2>&1; then
+    TAIL=(! h264parse ! mp4mux ! filesink location="$OUT")
+else
+    OUT="${OUT%.mp4}.h264"
+    TAIL=(! filesink location="$OUT")
+fi
+
+FRAMES=$(( SECS * 30 ))
+mkdir -p "$(dirname "$OUT")"
+echo "recording ${SECS}s of ${W}x${H} at $((BITRATE/1000)) kbps -> $OUT"
+
+gst-launch-1.0 -e \
+    v4l2src device="$DEV" num-buffers="$FRAMES" \
+    ! "video/x-raw,width=$W,height=$H" \
+    ! videoconvert ! video/x-raw,format=NV12 \
+    ! v4l2h264enc extra-controls="controls,video_bitrate=$BITRATE" \
+    "${TAIL[@]}" >/dev/null 2>&1
+
+if [[ -s "$OUT" ]]; then
+    sz=$(stat -c%s "$OUT")
+    echo "wrote $((sz/1024)) KiB to $OUT"
+else
+    echo "recording produced nothing" >&2
+    exit 1
+fi

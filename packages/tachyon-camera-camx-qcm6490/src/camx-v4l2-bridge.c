@@ -43,6 +43,10 @@ static void on_signal(int sig)
  * The driver accepts a plain write() of one packed frame, so there is no
  * buffer negotiation on this side.
  */
+/* Selected by --format; NV12 is what the loopback has always carried. */
+static int g_fourcc = V4L2_PIX_FMT_NV12;
+static const char *g_fourcc_name = "NV12";
+
 static int v4l2_open_sink(const char *path, int w, int h, size_t frame_sz)
 {
 	struct stat st;
@@ -65,9 +69,9 @@ static int v4l2_open_sink(const char *path, int w, int h, size_t frame_sz)
 	f.type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	f.fmt.pix.width        = w;
 	f.fmt.pix.height       = h;
-	f.fmt.pix.pixelformat  = V4L2_PIX_FMT_NV12;
+	f.fmt.pix.pixelformat  = g_fourcc;
 	f.fmt.pix.field        = V4L2_FIELD_NONE;
-	f.fmt.pix.bytesperline = w;
+	f.fmt.pix.bytesperline = (g_fourcc == V4L2_PIX_FMT_YUYV) ? w * 2 : w;
 	f.fmt.pix.sizeimage    = frame_sz;
 	f.fmt.pix.colorspace   = V4L2_COLORSPACE_SRGB;
 	if (ioctl(fd, VIDIOC_S_FMT, &f) < 0) {
@@ -81,15 +85,16 @@ static int v4l2_open_sink(const char *path, int w, int h, size_t frame_sz)
 	 * actually stored. (v4l2loopback has no NV21, and silently answering
 	 * with BGR4 is exactly how this went wrong once.)
 	 */
-	if (f.fmt.pix.pixelformat != V4L2_PIX_FMT_NV12 ||
+	if (f.fmt.pix.pixelformat != (uint32_t)g_fourcc ||
 	    f.fmt.pix.width != (uint32_t)w || f.fmt.pix.height != (uint32_t)h) {
-		fprintf(stderr, "sink rejected NV12 %dx%d, gave %.4s %ux%u\n",
-			w, h, (char *)&f.fmt.pix.pixelformat,
+		fprintf(stderr, "sink rejected %s %dx%d, gave %.4s %ux%u\n",
+			g_fourcc_name, w, h, (char *)&f.fmt.pix.pixelformat,
 			f.fmt.pix.width, f.fmt.pix.height);
 		close(fd);
 		return -1;
 	}
-	printf("sink format: %dx%d NV12, sizeimage=%u\n", w, h, f.fmt.pix.sizeimage);
+	printf("sink format: %dx%d %s, sizeimage=%u\n", w, h, g_fourcc_name,
+	       f.fmt.pix.sizeimage);
 	return fd;
 }
 
@@ -101,6 +106,8 @@ static void usage(const char *argv0)
 "  --v4l2-output PATH   v4l2loopback node to write to, e.g. /dev/tachyon-camera\n"
 "  --camera N           HAL camera id (CSI1 is 0, CSI2 is 1). default 0\n"
 "  --size WxH           capture size, must be one the HAL advertises. default 1280x960\n"
+"  --format FMT         nv12 (default) or yuyv. yuyv costs an extra conversion\n"
+"                       but is what desktop camera apps expect from a webcam\n"
 "\n"
 "Holds the HAL3 camera open for as long as it runs; native clients such as\n"
 "camx-capture cannot use that camera meanwhile. Stops cleanly on SIGTERM.\n",
@@ -119,11 +126,12 @@ int main(int argc, char **argv)
 		{ "v4l2-output", required_argument, 0, 'o' },
 		{ "camera",      required_argument, 0, 'c' },
 		{ "size",        required_argument, 0, 's' },
+		{ "format",      required_argument, 0, 'f' },
 		{ "help",        no_argument,       0, 'h' },
 		{ 0, 0, 0, 0 }
 	};
 	int c;
-	while ((c = getopt_long(argc, argv, "o:c:s:h", opts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "o:c:s:f:h", opts, NULL)) != -1) {
 		switch (c) {
 		case 'o': sink_path = optarg; break;
 		case 'c':
@@ -133,6 +141,18 @@ int main(int argc, char **argv)
 		case 's':
 			if (sscanf(optarg, "%dx%d", &W, &H) != 2 || W <= 0 || H <= 0) {
 				fprintf(stderr, "bad --size, want WxH\n"); return 2;
+			}
+			break;
+		case 'f':
+			if (!strcmp(optarg, "nv12")) {
+				g_fourcc = V4L2_PIX_FMT_NV12;
+				g_fourcc_name = "NV12";
+			} else if (!strcmp(optarg, "yuyv") || !strcmp(optarg, "yuy2")) {
+				g_fourcc = V4L2_PIX_FMT_YUYV;
+				g_fourcc_name = "YUYV";
+			} else {
+				fprintf(stderr, "bad --format, want nv12 or yuyv\n");
+				return 2;
 			}
 			break;
 		case 'h': usage(argv[0]); return 0;
@@ -216,25 +236,24 @@ int main(int argc, char **argv)
 		goto out;
 	}
 
-	const size_t ystride = ALIGN_UP((size_t)W, 64);
+	/*
+	 * Plane geometry the IPE actually writes: luma and chroma are each
+	 * scanline-aligned, so the buffer is ystride * (yscan + cscan) - not
+	 * ystride * yscan * 3/2. This is the layout camx-capture uses.
+	 */
+	const size_t ystride = ALIGN_UP((size_t)W, 128);
 	const size_t yscan   = ALIGN_UP((size_t)H, 64);
-	slot_sz = ystride * yscan * 3 / 2;
-	const size_t packed_sz = (size_t)W * H * 3 / 2;
-
-	v4l2_fd = v4l2_open_sink(sink_path, W, H, packed_sz);
-	if (v4l2_fd < 0) goto out;
-
-	stage = malloc(packed_sz);
-	if (!stage) { perror("malloc"); goto out; }
+	const size_t cscan   = ALIGN_UP(((size_t)H + 1) / 2, 64);
+	slot_sz = ystride * (yscan + cscan);
+	const size_t packed_sz = (g_fourcc == V4L2_PIX_FMT_YUYV)
+				 ? (size_t)W * H * 2      /* 4:2:2 packed */
+				 : (size_t)W * H * 3 / 2; /* 4:2:0 semi-planar */
 
 	for (int k = 0; k < NBUF; k++) {
 		g_slots[k].fd = dma_alloc(slot_sz);
 		if (g_slots[k].fd < 0) goto out;
 		heap_fd_open = k + 1;
 		g_slots[k].size = slot_sz;
-		g_slots[k].map = mmap(NULL, slot_sz, PROT_READ, MAP_SHARED, g_slots[k].fd, 0);
-		if (g_slots[k].map == MAP_FAILED) { perror("mmap"); g_slots[k].map = NULL; goto out; }
-
 		struct slot *s = &g_slots[k];
 		/* Must match what the HAL expects field for field - a wrong
 		 * numFds/numInts or a missing buffer_type comes back as
@@ -279,7 +298,28 @@ int main(int argc, char **argv)
 		if (rc) { fprintf(stderr, "initial request rc=%d\n", rc); goto out; }
 	}
 
-	printf("streaming %dx%d NV12 -> %s\n", W, H, sink_path);
+	/*
+	 * Sink and CPU mappings come up only after the requests are queued.
+	 * Doing either of them earlier is what stops the pipeline from ever
+	 * producing a frame; camx-capture has always used this order.
+	 */
+	v4l2_fd = v4l2_open_sink(sink_path, W, H, packed_sz);
+	if (v4l2_fd < 0) goto out;
+
+	stage = malloc(packed_sz);
+	if (!stage) { perror("malloc"); goto out; }
+
+	for (int k = 0; k < NBUF; k++) {
+		g_slots[k].map = mmap(NULL, slot_sz, PROT_READ, MAP_SHARED,
+				      g_slots[k].fd, 0);
+		if (g_slots[k].map == MAP_FAILED) {
+			perror("mmap");
+			g_slots[k].map = NULL;
+			goto out;
+		}
+	}
+
+	printf("streaming %dx%d %s -> %s\n", W, H, g_fourcc_name, sink_path);
 
 	struct timespec t0;
 	clock_gettime(CLOCK_MONOTONIC, &t0);
@@ -326,20 +366,45 @@ int main(int argc, char **argv)
 			struct dma_buf_sync sy = { .flags = DMA_BUF_SYNC_START | DMA_BUF_SYNC_READ };
 			ioctl(g_slots[k].fd, DMA_BUF_IOCTL_SYNC, &sy);
 			const uint8_t *src = g_slots[k].map;
-			for (int r = 0; r < H; r++)
-				memcpy(stage + (size_t)r * W, src + (size_t)r * ystride, W);
-			/*
-			 * The IPE emits NV21 (V first) but v4l2loopback only
-			 * advertises NV12, so swap each chroma byte pair while
-			 * de-striding rather than paying for a second pass.
-			 */
-			uint8_t *cdst = stage + (size_t)W * H;
-			for (int r = 0; r < (H + 1) / 2; r++) {
-				const uint8_t *s = src + (size_t)(yscan + r) * ystride;
-				uint8_t *d = cdst + (size_t)r * W;
-				for (int cc = 0; cc + 1 < W; cc += 2) {
-					d[cc]     = s[cc + 1];   /* U */
-					d[cc + 1] = s[cc];       /* V */
+			if (g_fourcc == V4L2_PIX_FMT_YUYV) {
+				/*
+				 * NV21 (4:2:0 semi-planar, V first) -> YUYV
+				 * (4:2:2 packed). Chroma is duplicated down the
+				 * pair of luma rows that share it. Costs more
+				 * than the NV12 path - a full interleave plus
+				 * 33% more output - but YUYV is what UVC webcams
+				 * present, so desktop apps are actually tested
+				 * against it.
+				 */
+				for (int r = 0; r < H; r++) {
+					const uint8_t *sy = src + (size_t)r * ystride;
+					const uint8_t *sc = src + (size_t)(yscan + r / 2) * ystride;
+					uint8_t *d = stage + (size_t)r * W * 2;
+					for (int cc = 0; cc + 1 < W; cc += 2) {
+						d[cc * 2 + 0] = sy[cc];
+						d[cc * 2 + 1] = sc[cc + 1];  /* U */
+						d[cc * 2 + 2] = sy[cc + 1];
+						d[cc * 2 + 3] = sc[cc];      /* V */
+					}
+				}
+			} else {
+				for (int r = 0; r < H; r++)
+					memcpy(stage + (size_t)r * W,
+					       src + (size_t)r * ystride, W);
+				/*
+				 * The IPE emits NV21 (V first) but v4l2loopback
+				 * only advertises NV12, so swap each chroma byte
+				 * pair while de-striding rather than paying for a
+				 * second pass.
+				 */
+				uint8_t *cdst = stage + (size_t)W * H;
+				for (int r = 0; r < (H + 1) / 2; r++) {
+					const uint8_t *s = src + (size_t)(yscan + r) * ystride;
+					uint8_t *d = cdst + (size_t)r * W;
+					for (int cc = 0; cc + 1 < W; cc += 2) {
+						d[cc]     = s[cc + 1];   /* U */
+						d[cc + 1] = s[cc];       /* V */
+					}
 				}
 			}
 			sy.flags = DMA_BUF_SYNC_END | DMA_BUF_SYNC_READ;

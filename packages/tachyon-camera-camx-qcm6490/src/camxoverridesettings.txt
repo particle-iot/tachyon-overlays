@@ -1,0 +1,46 @@
+# CamX HAL settings. Read once when the HAL opens, so a change needs
+#     systemctl restart tachyon-camera-bridge
+#
+# Path confirmed by strace: the HAL tries /var/cache/camera/ first, then
+# ./camxoverridesettings.txt relative to its working directory.
+#
+# ---------------------------------------------------------------------------
+# Why logging is off
+#
+# The tuning binary for this sensor, com.qti.tuned.sunny_imx519.bin, was
+# calibrated for a Sunny IMX519 module on SM8250 (see PROVENANCE.md) and does
+# not contain several modules the HAL looks for - tmc13_sw and AANR_ATF among
+# them. CamX reports each miss once per frame, which at 30 fps is roughly 900
+# lines a second, measured at 30099 warnings and 9083 errors in one 60 second
+# sample.
+#
+# That is a static condition being re-reported forever, and journald spends
+# about a fifth of a core writing it. Rate limiting in journald does not help
+# much: it still has to receive and evaluate every line before dropping it.
+#
+# systemLogEnable is the only key verified to work on this build. Setting it
+# FALSE takes the rate from ~900 lines/s to zero and journald leaves the CPU
+# listing entirely, with no effect on capture. logWarningMask=0 was tried and
+# changed nothing, so the finer-grained keys this build accepts are still
+# unknown - a middle setting that keeps errors and drops the repeated warning
+# has not been found.
+#
+# ---------------------------------------------------------------------------
+# Turning it back on
+#
+# The errors buried by this are not noise. They name real ISP blocks being
+# skipped:
+#
+#     camxswnrm10    Failed to get Chromatix    noise reduction
+#     camxipetf10    AANR_ATF not found         advanced noise reduction
+#     camxswtmc13    Failed to get Chromatix    tone mapping
+#
+# Those are the reason images look soft. Before investigating image quality,
+# restore the full log:
+#
+#     rm /var/cache/camera/camxoverridesettings.txt
+#     systemctl restart tachyon-camera-bridge
+#
+# The real fix is tuning data calibrated for the module on this board, which
+# would remove both the softness and the log flood at once.
+systemLogEnable=FALSE

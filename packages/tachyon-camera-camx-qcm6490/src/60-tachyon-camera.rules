@@ -1,0 +1,6 @@
+# Stable name for the loopback node the CamX bridge feeds.
+#
+# Matched on the card label rather than the device number: v4l2loopback is
+# loaded with video_nr=-1 because fixed numbers collide with the iris and CamX
+# nodes, so /dev/videoN is not predictable across boots or module loads.
+SUBSYSTEM=="video4linux", ATTR{name}=="Tachyon CamX Bridge", SYMLINK+="tachyon-camera"

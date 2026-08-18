@@ -11,6 +11,27 @@ case "$1" in
 configure)
     ldconfig
     rm -rf /var/cache/camera/*.bin /var/cache/camera/camxcache* 2>/dev/null || true
+
+    # Pick up the bridge unit and the loopback symlink rule.
+    if [ -d /run/systemd/system ]; then
+        systemctl daemon-reload 2>/dev/null || true
+
+        # Enable on first install only - "$2" carries the previous version and
+        # is empty for a fresh one. The camera should work after a reboot
+        # without anyone logging in to start it, but an operator who disabled
+        # the unit on purpose should not have that undone by an upgrade.
+        #
+        # The cost is real and worth stating: the bridge holds the CamX camera
+        # open for as long as it runs, and CamX does not allow two processes on
+        # one camera, so camx-capture and other native HAL3 clients cannot run
+        # alongside it. Stop the unit before using those.
+        if [ -z "$2" ]; then
+            systemctl enable tachyon-camera-bridge.service 2>/dev/null || true
+        fi
+    fi
+    if command -v udevadm >/dev/null 2>&1; then
+        udevadm control --reload-rules 2>/dev/null || true
+    fi
     ;;
 esac
 

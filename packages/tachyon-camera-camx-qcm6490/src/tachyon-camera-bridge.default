@@ -1,0 +1,45 @@
+# Configuration for tachyon-camera-bridge.service.
+#
+# The bridge holds the CamX camera open for as long as it runs, and CamX does
+# not support opening one camera from two processes - native HAL3 clients
+# cannot use the same camera meanwhile.
+#
+# Do not use `systemctl restart`. CamX releases its CDSP/fastrpc session
+# asynchronously and restart re-opens it immediately, which fails with
+# "remote_handle64_open failed"; the automatic retries tend to lose the same
+# race and the unit ends up in the start limit. Stop, wait a few seconds, then
+# start:
+#
+#     systemctl stop tachyon-camera-bridge && sleep 5 && \
+#         systemctl start tachyon-camera-bridge
+#
+# Stopping is immediate and the camera is usable by other clients ~5 s later,
+# so this costs nothing in practice.
+
+# HAL camera id. With both connectors enabled CSI1 is 0 and CSI2 is 1.
+CAMERA_ID=0
+
+# Capture size. Must be one the HAL advertises, which is NOT the same as
+# "4:3 and below the sensor maximum" - 2304x1728 for instance is rejected.
+# Query the real list with:
+#   camx-capture static | grep 'tag=0x000d000a'
+WIDTH=1280
+HEIGHT=960
+
+# Sink to write into. This is the udev symlink, not /dev/videoN: loopback
+# numbering is dynamic and pinning a number collides with the other nodes.
+DEVICE=/dev/tachyon-camera
+
+# Pixel format published on the loopback node: yuyv or nv12.
+#
+# Keep yuyv. It is what UVC webcams present, so desktop camera apps are all
+# tested against it. nv12 is semi-planar (separate Y and UV planes) and GNOME
+# Snapshot mishandles it - the viewfinder fails to negotiate and stills come
+# out green, having picked up the luma plane alone. Plain GStreamer pipelines
+# read nv12 from the same node correctly, so this is an application-side limit,
+# not a defect in the bridge.
+#
+# Cost of yuyv: 4:2:2 carries 33% more data than 4:2:0 and needs a full
+# interleave per frame - about 55% -> 71% of one core here. Frame rate is
+# unaffected.
+FORMAT=yuyv
