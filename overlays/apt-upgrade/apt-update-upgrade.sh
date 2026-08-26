@@ -9,15 +9,29 @@ export DEBIAN_FRONTEND=noninteractive
 # back 503 inside a single `apt-get upgrade` and took three of the four image jobs down.
 # None of the affected packages were ours; the pinned Particle debs had already resolved.
 #
-# Acquire::Retries makes apt retry an individual fetch; the loop covers apt giving up
-# after that. DPkg::Lock::Timeout is kept because the base image can have
-# unattended-upgrades active while we work. Same shape as the apt_get helper the 20.04
+# Measured on PR #65: the 503 burst that killed the build lasted 0.6s in one job and
+# 4.1s in another. apt ships with no retries, so a sub-second blip costs a ~15 minute
+# build. The failing transaction was all Ubuntu noble-updates packages -- libssl3t64,
+# curl, krb5, linux-firmware, network-manager, systemd libs -- and contained none of
+# our pinned Particle debs, which are not installed at this point and so cannot be in
+# an `upgrade` transaction at all.
+#
+# Acquire::Retries makes apt retry an individual fetch, which alone covers a 0.6s blip;
+# the loop covers apt giving up after that. Pipeline-Depth=0 serialises the fetch queue:
+# one job emitted 35,650 "Tried to start delayed item ... but failed" warnings in those
+# 4.1 seconds, which is apt's pipelined HTTP queue thrashing when a mirror errors
+# mid-pipeline, and is what turns a hiccup into a hard failure. DPkg::Lock::Timeout is
+# kept because the base image can have unattended-upgrades active while we work. Same shape as the apt_get helper the 20.04
 # builder uses (tachyon-release-builder #213), without the sudo -- this already runs as
 # root inside the chroot.
 apt_get() {
   local attempt
   for attempt in 1 2 3 4 5; do
-    if apt-get -o DPkg::Lock::Timeout=600 -o Acquire::Retries=3 "$@"; then
+    if apt-get \
+        -o DPkg::Lock::Timeout=600 \
+        -o Acquire::Retries=3 \
+        -o Acquire::http::Pipeline-Depth=0 \
+        "$@"; then
       return 0
     fi
     echo "apt-get $* failed (attempt ${attempt}/5); retrying in 20s" >&2
