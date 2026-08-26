@@ -1,7 +1,11 @@
 [Unit]
 Description=Setup Qualcomm modem partitions and symlinks
-After=local-fs.target dev-sdf8.device dev-sdg1.device
-Wants=dev-sdf8.device dev-sdg1.device
+# Wait on the partitions by label rather than by /dev/sdXN. dev-sdf8.device was
+# LUN 5 partition 8 (persist under the 20.04 layout) and dev-sdg1.device was
+# LUN 6 partition 1 (modem_a); neither name resolves under the 24.04 layout,
+# where persist is on LUN 0 and the modem image is core_nhlos_a.
+After=local-fs.target dev-disk-by\x2dpartlabel-persist.device dev-disk-by\x2dpartlabel-core_nhlos_a.device
+Wants=dev-disk-by\x2dpartlabel-persist.device dev-disk-by\x2dpartlabel-core_nhlos_a.device
 Before=rmtfs.service ModemManager.service
 
 [Service]
