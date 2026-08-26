@@ -1,0 +1,10 @@
+{
+  "name": "use-generic-ubuntu-mirror",
+  "description": "Repoint the rootfs apt sources off the region-pinned ec2.ports.ubuntu.com mirror onto the generic ports.ubuntu.com. Must run before any apt operation.",
+  "commands": [
+    {
+      "type": "chroot-script",
+      "script": "use-generic-ubuntu-mirror.sh"
+    }
+  ]
+}

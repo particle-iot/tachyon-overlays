@@ -3,6 +3,15 @@
     "name": "ubuntu-common-24.04",
     "description": "Sets up the base system with required overlays and configurations.",
     "steps": [
+      //NOTE:
+      // Must stay ahead of every apt step. The 24.04 base pins its apt sources to one
+      // AWS region's ports mirror (APT_MIRROR in tachyon-ubuntu-24.04 build.sh), and on
+      // 2026-08-26 that pool degraded to 259 B/s with one backend in six a hard 503,
+      // failing every composer build. Remove once the base image stops region-pinning.
+      {
+        "type": "overlay",
+        "name": "use-generic-ubuntu-mirror"
+      },
       {
         "type": "overlay",
         "name": "pin-pkg-versions"
