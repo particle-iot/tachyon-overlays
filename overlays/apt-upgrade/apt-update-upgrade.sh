@@ -16,6 +16,13 @@ export DEBIAN_FRONTEND=noninteractive
 # our pinned Particle debs, which are not installed at this point and so cannot be in
 # an `upgrade` transaction at all.
 #
+# A later controlled A/B made the scale clear. PR #66 -- byte-identical to #65 except
+# the three Particle deb pins reverted -- failed 4/4 at the same minute, same mirror,
+# same zero-Particle-package failure list. So this is purely the mirror, and the bursts
+# grew through the morning: 0.6s, 4.1s, 8.5s, then one lasting 07:08:34 -> 07:12:29,
+# just under FOUR MINUTES. A fixed 20s x 5 does not survive that, hence the exponential
+# backoff below: 15+30+60+120+240s gives ~8 minutes of cover across 6 attempts.
+#
 # Acquire::Retries makes apt retry an individual fetch, which alone covers a 0.6s blip;
 # the loop covers apt giving up after that. Pipeline-Depth=0 serialises the fetch queue:
 # one job emitted 35,650 "Tried to start delayed item ... but failed" warnings in those
@@ -25,8 +32,8 @@ export DEBIAN_FRONTEND=noninteractive
 # builder uses (tachyon-release-builder #213), without the sudo -- this already runs as
 # root inside the chroot.
 apt_get() {
-  local attempt
-  for attempt in 1 2 3 4 5; do
+  local attempt delay=15
+  for attempt in 1 2 3 4 5 6; do
     if apt-get \
         -o DPkg::Lock::Timeout=600 \
         -o Acquire::Retries=3 \
@@ -34,10 +41,14 @@ apt_get() {
         "$@"; then
       return 0
     fi
-    echo "apt-get $* failed (attempt ${attempt}/5); retrying in 20s" >&2
-    sleep 20
+    if [ "${attempt}" -eq 6 ]; then
+      break
+    fi
+    echo "apt-get $* failed (attempt ${attempt}/6); retrying in ${delay}s" >&2
+    sleep "${delay}"
+    delay=$(( delay * 2 ))
   done
-  echo "apt-get $* still failing after 5 attempts" >&2
+  echo "apt-get $* still failing after 6 attempts (~8 min of retries)" >&2
   return 1
 }
 
