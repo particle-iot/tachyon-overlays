@@ -116,6 +116,15 @@
         "type": "overlay",
         "name": "add-particle-cli"
       },
+      //The Kigen LPA (eSIM local profile assistant) -> /usr/bin/lpa. Present on 20.04
+      //via ubuntu-common-20.04 but never wired into any 24.04 stack, so /usr/bin/lpa
+      //has been missing from every 24.04 image.
+      //Requires tachyon-composer to stage $RESOURCES/lpa-linux-arm64 (composer#70) --
+      //the binary lives in a private repo and the overlay container has no credentials.
+      {
+        "type": "overlay",
+        "name": "add-kigen-sdk"
+      },
       {
         "type": "overlay",
         "name": "minimum-swap"
