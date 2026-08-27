@@ -44,6 +44,15 @@
         "type": "overlay",
         "name": "add-chromium-snap"
       },
+      //The desktop overlays above do further apt work after ubuntu-common-24.04 already
+      //ran check-pinned-packages: add-gnome-packages runs an unpinned `apt-get upgrade -y`
+      //and add-vscode adds an external repo and installs `code`. Re-verify the pins here so
+      //pinned-package enforcement is still the last apt-affecting gate for desktop, and do it
+      //before change-particle-repo-to-stable while the `latest` suite is still available.
+      {
+        "type": "overlay",
+        "name": "check-pinned-packages"
+      },
       //Particle dconf runs last of the dconf writers so its 24.04 settings win.
       //add-gnome-tweaks also ships /etc/dconf/profile/user; the two files are byte-identical
       //(md5 e97546f682227566fc06fcaf65993846) so the overlap is harmless.
