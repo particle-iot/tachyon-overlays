@@ -1,0 +1,26 @@
+{
+  "name": "add-chromium-snap",
+  "description": "Install Chromium from the snap store on first boot (24.04 has no chromium deb).",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "apt-get install -y --no-install-recommends snapd"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/install-chromium-snap.sh",
+      "destination": "/usr/local/bin/install-chromium-snap.sh",
+      "permissions": "755"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/particle-chromium-snap.service",
+      "destination": "/etc/systemd/system/particle-chromium-snap.service",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl enable particle-chromium-snap.service"
+    }
+  ]
+}

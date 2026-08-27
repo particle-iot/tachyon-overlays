@@ -1,0 +1,10 @@
+{
+  "name": "set-headless-default-target",
+  "description": "Force the default systemd target to multi-user.target on headless images.",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl set-default multi-user.target"
+    }
+  ]
+}
