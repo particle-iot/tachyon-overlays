@@ -1,11 +1,23 @@
 {
   "name": "add-video-firmware",
-  "description": "Install the Gen2 video firmware for the Iris VPU on QCM6490. The upstream iris driver requests qcom/vpu/vpu20_p1_gen2_s6.mbn, which noble's linux-firmware predates. See SOURCES.md for origins.",
+  "description": "Install the Gen2 video firmware for the Iris VPU on QCM6490, together with the licence texts its redistribution terms require. The upstream iris driver requests qcom/vpu/vpu20_p1_gen2_s6.mbn, which noble's linux-firmware predates. See SOURCES.md for origins.",
   "commands": [
     {
       "type": "copy-into-chroot",
       "source": "files/vpu20_p1_gen2_s6.mbn",
       "destination": "/lib/firmware/qcom/vpu/vpu20_p1_gen2_s6.mbn",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/LICENSE.qcom",
+      "destination": "/usr/share/doc/tachyon-video-firmware/LICENSE.qcom",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/NOTICE.qcom",
+      "destination": "/usr/share/doc/tachyon-video-firmware/NOTICE.qcom",
       "permissions": "644"
     }
   ]

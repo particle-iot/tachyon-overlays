@@ -31,3 +31,21 @@ be carried here.
 Beware a name collision: linux-firmware also carries `vpu20_p1_gen2.mbn` as a
 symlink to this same file, whereas qcom-linux 1.7 ships a *different* binary
 under that name (`video-firmware.2.4.2`). The two are not interchangeable.
+
+## Licence texts
+
+linux-firmware's WHENCE entry for this file reads:
+
+    Driver: iris - Qualcomm Iris video codec accelerator
+    File: qcom/vpu/vpu20_p1_gen2_s6.mbn
+    Licence: Redistributable. See LICENSE.qcom and NOTICE.qcom for details
+
+Both are shipped alongside the firmware, under
+`/usr/share/doc/tachyon-video-firmware/`, taken verbatim from
+`LICENSES/` in linux-firmware:
+
+  - `LICENSE.qcom`  sha256 `be904cd28cb292b8...` - byte-identical to the copy
+    noble's linux-firmware package already installs, so this only makes the
+    association explicit for a firmware that package does not carry.
+  - `NOTICE.qcom`   sha256 `fa43e1b9a13b341a...` - **not** present in noble's
+    linux-firmware at all; without this overlay it would be missing entirely.
