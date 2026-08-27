@@ -1,0 +1,11 @@
+[Unit]
+Description=Raise the USB input current limit to the negotiated maximum
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/raise-usb-icl.sh
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target

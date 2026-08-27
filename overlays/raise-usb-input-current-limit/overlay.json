@@ -1,0 +1,28 @@
+{
+  "name": "raise-usb-input-current-limit",
+  "description": "Raise the USB input current limit from the 100mA SDP default to the port's negotiated current_max, so the battery actually charges while plugged in.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/raise-usb-icl.sh",
+      "destination": "/usr/local/sbin/raise-usb-icl.sh",
+      "permissions": "755"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/raise-usb-icl.service",
+      "destination": "/etc/systemd/system/raise-usb-icl.service",
+      "permissions": "644"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/99-usb-icl.rules",
+      "destination": "/etc/udev/rules.d/99-usb-icl.rules",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl enable raise-usb-icl.service"
+    }
+  ]
+}

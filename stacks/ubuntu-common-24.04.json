@@ -34,6 +34,10 @@
       },
       {
         "type": "overlay",
+        "name": "raise-usb-input-current-limit"
+      },
+      {
+        "type": "overlay",
         "name": "root-passwd"
       },
       {

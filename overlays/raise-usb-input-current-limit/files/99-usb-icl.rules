@@ -1,0 +1,4 @@
+# Re-apply the input current limit whenever the USB supply appears or its
+# negotiated capability changes (cable plug, SDP->DCP/CDP re-detection).
+SUBSYSTEM=="power_supply", ACTION=="add|change", ENV{POWER_SUPPLY_NAME}=="qcom-battmgr-usb", RUN+="/usr/local/sbin/raise-usb-icl.sh"
+SUBSYSTEM=="power_supply", ACTION=="add|change", ENV{POWER_SUPPLY_NAME}=="usb", RUN+="/usr/local/sbin/raise-usb-icl.sh"
