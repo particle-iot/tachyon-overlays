@@ -23,6 +23,12 @@
         "type": "overlay",
         "name": "pin-pkg-versions-cleanup"
       },      
+      //A headless image must not boot into graphical.target, which is what the Ubuntu
+      //base image defaults to.
+      {
+        "type": "overlay",
+        "name": "set-headless-default-target"
+      },
       //NOTE:
       // post-overlay-cleanup has to be last in the list of overlay comments.
       // This basically restores the chroot network configuration to use the original ubuntu release network configuration.

@@ -16,7 +16,31 @@
         "type": "stack",
         "name": "ubuntu-common-24.04"
       },
-      //Desktop customizations etc...
+      //Desktop app set. Ported from ubuntu-desktop-common-20.04, which had no 24.04
+      //counterpart: the 24.04 desktop image previously got Particle's dconf styling but
+      //none of the GNOME package set, welcome app or editor.
+      //These run BEFORE change-particle-repo-to-stable because add-desktop-setup installs
+      //particle-tachyon-desktop-setup, whose pinned 2.7.0 only exists in the `latest`
+      //suite (`stable` tops out at 2.6.1).
+      {
+        "type": "overlay",
+        "name": "add-gnome-packages"
+      },
+      {
+        "type": "overlay",
+        "name": "add-gnome-tweaks"
+      },
+      {
+        "type": "overlay",
+        "name": "add-desktop-setup"
+      },
+      {
+        "type": "overlay",
+        "name": "add-vscode"
+      },
+      //Particle dconf runs last of the dconf writers so its 24.04 settings win.
+      //add-gnome-tweaks also ships /etc/dconf/profile/user; the two files are byte-identical
+      //(md5 e97546f682227566fc06fcaf65993846) so the overlap is harmless.
       {
         "type": "overlay",
         "name": "add-particle-desktop-dconf-24.04"
