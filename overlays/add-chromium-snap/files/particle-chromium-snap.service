@@ -1,0 +1,16 @@
+[Unit]
+Description=Install the Chromium snap on first boot
+After=network-online.target snapd.service
+Wants=network-online.target snapd.service
+ConditionPathExists=!/var/lib/tachyon/chromium-snap.done
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/install-chromium-snap.sh
+# Do not block or fail the boot if the store is unreachable.
+TimeoutStartSec=600
+SuccessExitStatus=0 1
+
+[Install]
+WantedBy=multi-user.target

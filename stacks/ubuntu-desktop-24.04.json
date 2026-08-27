@@ -38,6 +38,12 @@
         "type": "overlay",
         "name": "add-vscode"
       },
+      //Chromium: the 20.04 overlay's PPA has no noble build, so 24.04 uses the snap,
+      //installed on first boot (snapd does not run inside the build chroot).
+      {
+        "type": "overlay",
+        "name": "add-chromium-snap"
+      },
       //Particle dconf runs last of the dconf writers so its 24.04 settings win.
       //add-gnome-tweaks also ships /etc/dconf/profile/user; the two files are byte-identical
       //(md5 e97546f682227566fc06fcaf65993846) so the overlap is harmless.
