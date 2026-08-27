@@ -168,6 +168,10 @@
       },
       {
         "type": "overlay",
+        "name": "add-video-firmware"
+      },
+      {
+        "type": "overlay",
         "name": "add-tachyon-audio",
         "when": { "env": "ENV_UBUNTU_24_04_VERSION", "min": "1.2" }
       },
