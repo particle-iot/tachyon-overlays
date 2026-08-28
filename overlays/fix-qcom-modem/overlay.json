@@ -9,7 +9,9 @@
     },
 
     // Create modem mountpoints (created by add-fstab-mounts, but ensure they exist).
-    // /firmware is only mounted on the 1.1 build; the empty dir is harmless on 1.2+.
+    // /firmware is only mounted on the 1.1 build.  On 1.2+ it stays empty, so
+    // nothing may point the modem at it -- see modem-tftp-server, whose RFS
+    // readonly/firmware tree has to target /vendor/modem on new-BP instead.
     {
       "type": "chroot-cmd",
       "cmd": "mkdir -p /persist /firmware"
