@@ -6,7 +6,11 @@
 set -euo pipefail
 
 cd "$(dirname "$0")"
-OUT=${1:-.}
+# Build output goes outside the source tree. The copy that actually ships is
+# committed under overlays/<name>/files/; a second one next to the sources
+# would let the two drift.
+OUT=${1:-$(cd ../.. && pwd)/output/packages}
+mkdir -p "$OUT"
 
 ver=$(awk '/^Version:/ {print $2}' pkg/DEBIAN/control)
 deb="$OUT/tachyon-firmware-dragonwing-compat_${ver}_all.deb"
