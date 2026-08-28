@@ -11,7 +11,11 @@
 set -euo pipefail
 
 cd "$(dirname "$0")"
-OUT=${1:-.}
+# Build output goes outside the source tree. The copy that actually ships is
+# committed under overlays/<name>/files/; a second one next to the sources
+# would let the two drift.
+OUT=${1:-$(cd ../.. && pwd)/output/packages}
+mkdir -p "$OUT"
 STAGE=$(mktemp -d)
 # Scratch space kept OUTSIDE $STAGE - anything dropped in there lands in the
 # package payload.

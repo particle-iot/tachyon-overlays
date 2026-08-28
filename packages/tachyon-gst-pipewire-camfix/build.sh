@@ -10,7 +10,11 @@ cd "$(dirname "$0")"
 
 PKG=tachyon-gst-pipewire-camfix
 VER=${VER:-1.0}
-OUT=${1:-.}
+# Build output goes outside the source tree. The copy that actually ships is
+# committed under overlays/<name>/files/; a second one next to the sources
+# would let the two drift.
+OUT=${1:-$(cd ../.. && pwd)/output/packages}
+mkdir -p "$OUT"
 
 SO=assets/libgstpipewire.so
 [ -f "$SO" ] || { echo "$SO missing - run build-plugin.sh first" >&2; exit 1; }
