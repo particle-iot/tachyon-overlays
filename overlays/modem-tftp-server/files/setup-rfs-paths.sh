@@ -10,7 +10,10 @@ set -euo pipefail
 echo "Setting up RFS directory structure for Qualcomm modem file access..."
 
 # The readonly/firmware path differs by build layout, so branch on the same
-# ENV_UBUNTU_24_04_VERSION that add-fstab-mounts uses (defaults to 1.1).
+# ENV_UBUNTU_24_04_VERSION that add-fstab-mounts uses (defaults to 1.2/new-BP).
+# The default MUST match add-fstab-mounts': if fstab mounts the new-BP layout
+# while this script links the 1.1 one, readonly/firmware points at a /firmware
+# that was never mounted and the modem silently parks at CFUN=7.
 #
 #   1.1      a real /firmware partition (/dev/sdg1) is mounted, and the modem's
 #            readonly tree is that mount.
@@ -25,8 +28,8 @@ echo "Setting up RFS directory structure for Qualcomm modem file access..."
 # leftover empty /firmware makes every one of those reads fail with ENOENT; the
 # modem then never loads its MCFG and parks at CFUN=7, which surfaces to
 # ModemManager and qmicli as "DeviceNotReady" with no other clue.
-echo "[modem-tftp-server] read ENV_UBUNTU_24_04_VERSION='${ENV_UBUNTU_24_04_VERSION:-}' (defaults to 1.1 if empty)"
-VERSION="${ENV_UBUNTU_24_04_VERSION:-1.1}"
+echo "[modem-tftp-server] read ENV_UBUNTU_24_04_VERSION='${ENV_UBUNTU_24_04_VERSION:-}' (defaults to 1.2 if empty)"
+VERSION="${ENV_UBUNTU_24_04_VERSION:-1.2}"
 if [ "$(printf '%s\n1.2\n' "$VERSION" | sort -V | head -n1)" = "1.2" ]; then
     NEW_BP=1
     echo "[modem-tftp-server] Ubuntu 24.04 build $VERSION -> new-BP (/vendor/modem)"
