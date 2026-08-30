@@ -1,31 +1,19 @@
 #!/bin/bash
-# Select and install the correct fstab for the target Ubuntu 24.04 build.
+# Create the mountpoints the fstab needs, then regenerate the initramfs.
 #
-# Build 1.1 (default / unset) uses the legacy layout with /boot/efi, bluetooth_a
-# and a separate /firmware partition. Build 1.2+ ("new-BP") uses the cloud-image
-# root label and the core_nhlos_a / dtb_a partitions, with no /boot/efi mount.
+# There is one fstab. It used to be chosen at build time between a 1.1 layout
+# and the new-BP 1.2+ one, keyed off ENV_UBUNTU_24_04_VERSION, but 1.1 has been
+# retired -- the OS version and the BP version were the same number, so the
+# variable only duplicated what the release version already said.
 #
-# Branches on ENV_UBUNTU_24_04_VERSION, which the overlay tool forwards into the
-# chroot. The two candidate fstabs are staged at /tmp/fstab.11 and /tmp/fstab.12
-# by the overlay's copy-into-chroot steps.
+# Everything in the fstab resolves by label. Never reintroduce a /dev/sdXN: the
+# kernel's SCSI letters follow UFS LUN order, so an index bakes in one specific
+# partition table. Adding the misc partition to LUN 0 shifted system from sda3
+# to sda4 and broke grub exactly that way, and the retired 1.1 fstab had been
+# mounting /persist from a stale /dev/sdf8 for a whole layout generation --
+# silently, because the entry carried `nofail`.
 set -euo pipefail
 
-# Print what we received so CI logs confirm the ENV_ value reached the chroot.
-echo "[add-fstab-mounts] read ENV_UBUNTU_24_04_VERSION='${ENV_UBUNTU_24_04_VERSION:-}' (defaults to 1.1 if empty)"
-VERSION="${ENV_UBUNTU_24_04_VERSION:-1.1}"
-
-# True when VERSION >= 1.2 (dotted version compare via sort -V).
-if [ "$(printf '%s\n1.2\n' "$VERSION" | sort -V | head -n1)" = "1.2" ]; then
-    echo "[add-fstab-mounts] Ubuntu 24.04 build $VERSION -> new-BP fstab"
-    mkdir -p /vendor /boot/dtb_a /persist
-    install -m 644 /tmp/fstab.12 /etc/fstab
-else
-    echo "[add-fstab-mounts] Ubuntu 24.04 build $VERSION -> 1.1 fstab"
-    mkdir -p /vendor /bt_firmware /boot/efi /persist /firmware
-    install -m 644 /tmp/fstab.11 /etc/fstab
-fi
-
-# Clean up staged candidates.
-rm -f /tmp/fstab.11 /tmp/fstab.12
+mkdir -p /vendor /boot/dtb_a /persist
 
 update-initramfs -k all -t -u

@@ -9,41 +9,23 @@ set -euo pipefail
 
 echo "Setting up RFS directory structure for Qualcomm modem file access..."
 
-# The readonly/firmware path differs by build layout, so branch on the same
-# ENV_UBUNTU_24_04_VERSION that add-fstab-mounts uses (defaults to 1.1).
-#
-#   1.1      a real /firmware partition (/dev/sdg1) is mounted, and the modem's
-#            readonly tree is that mount.
-#   1.2+     "new-BP": there is no /firmware partition.  The non-HLOS firmware
-#            lives on core_nhlos_a, mounted at /vendor, and the modem images sit
-#            in /vendor/modem.
-#
 # The modem asks for paths under "readonly/firmware/image/", e.g.
 #   readonly/firmware/image/modem_pr/mcfg/configs/mcfg_sw/mbn_sw.dig
-# and on new-BP that content is /vendor/modem/modem_pr/..., so the mapping is
-# readonly/firmware/image -> /vendor/modem.  Pointing readonly/firmware at the
-# leftover empty /firmware makes every one of those reads fail with ENOENT; the
-# modem then never loads its MCFG and parks at CFUN=7, which surfaces to
-# ModemManager and qmicli as "DeviceNotReady" with no other clue.
-echo "[modem-tftp-server] read ENV_UBUNTU_24_04_VERSION='${ENV_UBUNTU_24_04_VERSION:-}' (defaults to 1.1 if empty)"
-VERSION="${ENV_UBUNTU_24_04_VERSION:-1.1}"
-if [ "$(printf '%s\n1.2\n' "$VERSION" | sort -V | head -n1)" = "1.2" ]; then
-    NEW_BP=1
-    echo "[modem-tftp-server] Ubuntu 24.04 build $VERSION -> new-BP (/vendor/modem)"
-else
-    NEW_BP=0
-    echo "[modem-tftp-server] Ubuntu 24.04 build $VERSION -> 1.1 (/firmware)"
-fi
+# The non-HLOS firmware lives on core_nhlos_a, mounted at /vendor, with the
+# modem images in /vendor/modem -- so readonly/firmware/image -> /vendor/modem.
+#
+# This used to branch on ENV_UBUNTU_24_04_VERSION, pointing readonly/firmware at
+# a real /firmware partition on the 1.1 layout. 1.1 is retired and there is no
+# /firmware partition any more. Do not point this at /firmware again: it exists
+# as an empty leftover directory, so every read under it returns ENOENT, the
+# modem never loads its MCFG and parks at CFUN=7 -- which surfaces to
+# ModemManager and qmicli only as "DeviceNotReady", with no other clue.
 
-# Point one subsystem's readonly tree at the firmware for this layout.
+# Point one subsystem's readonly tree at the modem firmware.
 link_readonly_firmware() {
     _sub="$1"
-    if [ "$NEW_BP" = "1" ]; then
-        mkdir -p "/system/rfs/msm/$_sub/readonly/firmware"
-        ln -sfn /vendor/modem "/system/rfs/msm/$_sub/readonly/firmware/image"
-    else
-        ln -sf /firmware/ "/system/rfs/msm/$_sub/readonly/firmware"
-    fi
+    mkdir -p "/system/rfs/msm/$_sub/readonly/firmware"
+    ln -sfn /vendor/modem "/system/rfs/msm/$_sub/readonly/firmware/image"
 }
 
 # Create base directory structure
