@@ -7,25 +7,47 @@ import datetime
 
 BLOB_PATH = "/dev/disk/by-partlabel/misc"
 
+# The size field is four bytes read straight off the partition, so a single flipped
+# bit can claim up to 4 GiB. Never read more than the partition can physically hold
+# -- `misc` is 1 MiB, and the blob itself is a few KiB of JSON -- so a corrupt
+# header cannot make early boot allocate something absurd.
+MAX_BLOB_SIZE = 1024 * 1024
 
-def read_bootstrap_time(path: str) -> datetime.datetime:
+
+def read_bootstrap_time(path: str):
+    """Return the setup timestamp from the config blob, or None if there is not one.
+
+    A zeroed partition is the normal steady state, not a fault: `particle-linux`
+    erases the blob once it has applied it, so every boot after the first finds
+    nothing here. Ditto a blob written by a CLI old enough not to stamp
+    `initialTime`. Both return None. Anything else -- a truncated read, an absurd
+    length, malformed JSON -- raises, because that is a real anomaly worth naming.
+    """
     with open(path, "rb") as f:
         header = f.read(4)
         if len(header) < 4:
-            raise ValueError("Blob too short to contain size header")
+            raise ValueError("blob is too short to contain a size header")
 
         size = struct.unpack(">I", header)[0]  # Big-endian uint32
         if size == 0:
-            raise ValueError("Blob is empty; nothing to read")
+            return None
+
+        if size > MAX_BLOB_SIZE:
+            raise ValueError(f"blob declares {size} bytes, above the {MAX_BLOB_SIZE} byte cap")
 
         data = f.read(size)
         if len(data) < size:
-            raise ValueError("Blob content shorter than declared size")
+            raise ValueError(f"blob declares {size} bytes but only {len(data)} are readable")
 
         obj = json.loads(data.decode("utf-8"))
-        # `particle tachyon setup` stamps this with the host's clock at the moment
-        # it built the blob, as an ISO-8601 UTC string ending in `Z`.
-        return datetime.datetime.fromisoformat(obj["initialTime"].replace("Z", "+00:00"))
+
+    # `particle tachyon setup` stamps this with the host's clock at the moment it
+    # built the blob, as an ISO-8601 UTC string ending in `Z`.
+    initial_time = obj.get("initialTime")
+    if not initial_time:
+        return None
+
+    return datetime.datetime.fromisoformat(initial_time.replace("Z", "+00:00"))
 
 
 def set_system_time(when: datetime.datetime):
@@ -44,8 +66,16 @@ def main():
     # 1 January 2025 and silently turned this service into a no-op.
     try:
         bootstrap_time = read_bootstrap_time(BLOB_PATH)
-    except Exception:
-        print("[set-initial-time] No initial time is available. Skipping.")
+    except Exception as e:
+        # Keep the unit green -- a clock we could not correct is not worth failing
+        # boot over -- but say what actually went wrong. Reporting every failure as
+        # "not available" hides a corrupt partition behind the same line as an
+        # ordinary erased one, which is exactly the case someone will need to debug.
+        print(f"[set-initial-time] Could not read {BLOB_PATH}: {type(e).__name__}: {e}")
+        return
+
+    if bootstrap_time is None:
+        print("[set-initial-time] No setup time recorded. Skipping.")
         return
 
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -59,7 +89,7 @@ def main():
     try:
         set_system_time(bootstrap_time)
     except Exception as e:
-        print(f"[set-initial-time] Failed to set the time: {e}")
+        print(f"[set-initial-time] Failed to set the time: {type(e).__name__}: {e}")
 
 
 if __name__ == "__main__":
