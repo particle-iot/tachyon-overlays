@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import os
 import struct
 import json
 import subprocess
@@ -7,11 +8,20 @@ import datetime
 
 BLOB_PATH = "/dev/disk/by-partlabel/misc"
 
-# The size field is four bytes read straight off the partition, so a single flipped
-# bit can claim up to 4 GiB. Never read more than the partition can physically hold
-# -- `misc` is 1 MiB, and the blob itself is a few KiB of JSON -- so a corrupt
-# header cannot make early boot allocate something absurd.
-MAX_BLOB_SIZE = 1024 * 1024
+# Only used if the kernel does not report a size for the backing device, which it
+# should always do for a real partition. `misc` is 1 MiB today.
+FALLBACK_BLOB_LIMIT = 1024 * 1024
+
+
+def partition_size(f) -> int:
+    """Size of the backing partition, in bytes, as the kernel reports it.
+
+    `os.stat().st_size` is 0 for a block device, so seek to the end instead -- that
+    returns the real size (1048576 for `misc`, matching `blockdev --getsize64`).
+    """
+    size = f.seek(0, os.SEEK_END)
+    f.seek(0)
+    return size
 
 
 def read_bootstrap_time(path: str):
@@ -32,8 +42,14 @@ def read_bootstrap_time(path: str):
         if size == 0:
             return None
 
-        if size > MAX_BLOB_SIZE:
-            raise ValueError(f"blob declares {size} bytes, above the {MAX_BLOB_SIZE} byte cap")
+        # The size field is four bytes read straight off the partition, so a single
+        # flipped bit can claim up to 4 GiB. The partition itself is the natural
+        # bound: a blob cannot be larger than the thing holding it, less the four
+        # bytes the header already took.
+        limit = (partition_size(f) or FALLBACK_BLOB_LIMIT) - 4
+        f.seek(4)
+        if size > limit:
+            raise ValueError(f"blob declares {size} bytes, more than the {limit} bytes the partition holds")
 
         data = f.read(size)
         if len(data) < size:
