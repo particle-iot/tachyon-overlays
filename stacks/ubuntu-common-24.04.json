@@ -76,6 +76,13 @@
         "type": "overlay",
         "name": "add-network-manager"
       },
+      // Ships NetworkManager's connectivity-check conf so particle-linux finds it
+      // already correct and skips its rewrite-and-restart on first boot. Must come
+      // after add-network-manager, which installs NetworkManager itself.
+      {
+        "type": "overlay",
+        "name": "add-nm-connectivity-check"
+      },
       {
         "type": "overlay",
         "name": "add-tailscale"
