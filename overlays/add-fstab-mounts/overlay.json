@@ -1,8 +1,11 @@
 {
   "name": "add-fstab-mounts",
-  "description": "Install the Ubuntu 24.04 fstab and regenerate the initramfs. Every mount is resolved by label (LABEL= / PARTLABEL=), never by /dev/sdXN.",
+  "description": "Install the Ubuntu 24.04 fstab, mount /vendor from the initramfs so firmware symlinks resolve before udev autoloads their drivers, and regenerate the initramfs. Every mount is resolved by label (LABEL= / PARTLABEL=), never by /dev/sdXN.",
   "commands": [
     { "type": "copy-into-chroot", "source": "files/fstab", "destination": "/etc/fstab", "permissions": "644" },
+    // Must be copied in before install-fstab.sh: that script runs update-initramfs,
+    // which is what bakes this init-bottom hook into the image.
+    { "type": "copy-into-chroot", "source": "files/mount-vendor", "destination": "/etc/initramfs-tools/scripts/init-bottom/mount-vendor", "permissions": "755" },
     { "type": "chroot-script", "script": "install-fstab.sh" }
   ]
 }
