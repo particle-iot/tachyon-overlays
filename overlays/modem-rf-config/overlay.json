@@ -1,0 +1,22 @@
+{
+  "name": "modem-rf-config",
+  "description": "Tightens modem RF NV to match the board: no 4x4 MIMO on either variant, reduced TX power on NA.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/modem-rf-config.sh",
+      "destination": "/usr/bin/modem-rf-config.sh",
+      "permissions": "755"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/modem-rf-config.service",
+      "destination": "/etc/systemd/system/modem-rf-config.service",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "systemctl enable modem-rf-config.service"
+    }
+  ]
+}

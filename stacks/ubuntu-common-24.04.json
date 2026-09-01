@@ -194,6 +194,12 @@
         "type": "overlay",
         "name": "modem-tftp-server"
       },
+      // Both variants only have two antennas, so 4x4 MIMO has to come off; NA
+      // additionally runs at reduced TX power for FCC.
+      {
+        "type": "overlay",
+        "name": "modem-rf-config"
+      },
       {
         "type": "overlay",
         "name": "add-grub-configuration"

@@ -119,6 +119,12 @@
       "type": "overlay",
       "name": "tweak-cellular-priority"
     },
+    // Both variants only have two antennas, so 4x4 MIMO has to come off; NA
+    // additionally runs at reduced TX power for FCC.
+    {
+      "type": "overlay",
+      "name": "modem-rf-config"
+    },
     //must got after the app
     {
       "type": "overlay",

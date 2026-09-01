@@ -1,0 +1,26 @@
+[Unit]
+Description=Tighten modem RF configuration to match the board
+# The modem has to be up before we can talk AT to it, but we also want to get in
+# before particle-tachyon-rild takes the AT channel. The script's own handshake
+# covers what this ordering cannot guarantee.
+After=particle-modem-setup.service
+Wants=particle-modem-setup.service
+Before=particle-tachyon-rild.service ModemManager.service
+
+[Service]
+Type=oneshot
+# No RemainAfterExit: it keeps the service active after the script exits, and
+# ExecStopPost only runs once a service actually stops -- with both set, the
+# reboot below never fires. Verified on a 24.04 board: ExecMainStatus was 10 and
+# ExecStopPost showed pid=0, start_time=[n/a].
+ExecStart=/usr/bin/modem-rf-config.sh
+# 10 means the NV was written and needs a reset -- a result, not a failure.
+SuccessExitStatus=10
+# Reset policy lives here, not in the script, so the production line can call
+# the same script and defer the reset to the end of a batch. Because the script
+# is idempotent through read-back, the next boot reads the values it just wrote,
+# exits 0, and does not reboot again.
+ExecStopPost=/bin/sh -c 'test "${EXIT_STATUS}" = 10 && systemctl --no-block reboot || true'
+
+[Install]
+WantedBy=multi-user.target
