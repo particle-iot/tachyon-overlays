@@ -1,17 +1,13 @@
 {
     "name": "add-network-manager-policy",
-    "description": "Adds in polkit policies for NetworkManager management by regular users",
+    "description": "Adds polkit policy letting netdev users manage NetworkManager. JS .rules for all releases (24.04 + 26.04); legacy .pkla kept for 24.04, whose polkit still reads it via polkitd-pkla.",
     "commands": [
       {
-        "type": "chroot-cmd",
-        "cmd": "apt update -y && apt install -y polkitd-pkla policykit-desktop-privileges"
+        "type": "chroot-script",
+        "script": "install-network-policy.sh"
       },
-      {
-        "type": "chroot-cmd",
-        "cmd": "mkdir -p /etc/polkit-1/localauthority/90-mandatory.d"
-      },
-      // For some reason PermissionError: [Errno 13] Permission denied: '/mnt/tachyon/etc/polkit-1/localauthority/90-mandatory.d'
-      // if copied directly
+      // Copy via /tmp then cp inside the chroot: a direct copy-into-chroot to the
+      // polkit dirs hits PermissionError: [Errno 13] on the mounted rootfs.
       {
         "type": "copy-into-chroot",
         "source": "files/99-network.pkla",
@@ -19,8 +15,14 @@
         "permissions": "644"
       },
       {
+        "type": "copy-into-chroot",
+        "source": "files/99-network.rules",
+        "destination": "/tmp/99-network.rules",
+        "permissions": "644"
+      },
+      {
         "type": "chroot-cmd",
-        "cmd": "cp /tmp/99-network.pkla /etc/polkit-1/localauthority/90-mandatory.d/ && rm /tmp/99-network.pkla"
+        "cmd": "cp /tmp/99-network.pkla /etc/polkit-1/localauthority/90-mandatory.d/ && cp /tmp/99-network.rules /etc/polkit-1/rules.d/ && rm /tmp/99-network.pkla /tmp/99-network.rules"
       }
     ]
 }

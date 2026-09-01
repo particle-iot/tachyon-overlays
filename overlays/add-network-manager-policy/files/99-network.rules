@@ -1,0 +1,11 @@
+// Allow netdev-group users to manage all NetworkManager settings and state.
+// Modern polkit JavaScript rule (polkit >= 0.106), read on both 24.04 and 26.04.
+// 26.04/resolute dropped the legacy .pkla backend (polkitd-pkla), so this is the
+// authoritative mechanism there; on 24.04 it duplicates 99-network.pkla with the
+// same effective permission.
+polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.freedesktop.NetworkManager.") === 0 &&
+        subject.isInGroup("netdev")) {
+        return polkit.Result.YES;
+    }
+});
