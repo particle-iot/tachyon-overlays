@@ -27,7 +27,20 @@ fi
 # echo "apt show bluez5"
 # apt show bluez5
 
-if apt-get install -y dpkg update-alternatives dialog gdm3 gnome-session-wayland pinentry-gnome3 gnome-terminal ; then
+# Core GNOME session/desktop. Filter to what this release ships: 26.04/resolute
+# dropped gnome-session-wayland (the Wayland session now comes from gnome-session
+# itself), and "update-alternatives" is part of dpkg, not an installable package.
+# gnome-session is added so the Wayland session is present on both 24.04 and 26.04.
+CORE_GNOME="dpkg dialog gdm3 gnome-session gnome-session-wayland pinentry-gnome3 gnome-terminal"
+GNOME_AVAIL=""
+for p in ${CORE_GNOME}; do
+  if apt-cache show "${p}" >/dev/null 2>&1; then
+    GNOME_AVAIL="${GNOME_AVAIL} ${p}"
+  else
+    echo "skipping package not available in this release: ${p}"
+  fi
+done
+if apt-get install -y ${GNOME_AVAIL} ; then
   echo "GNOME packages installed successfully."
 else
   echo "Error installing GNOME packages."
