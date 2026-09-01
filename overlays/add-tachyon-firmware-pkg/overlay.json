@@ -12,7 +12,7 @@
       },
       {
         "type": "chroot-cmd",
-        "cmd": "update-initramfs -k all -t -u"
+        "cmd": "update-initramfs -k all -t -u 2>/dev/null || update-initramfs -k all -u"
       }
     ]
   }
