@@ -63,6 +63,7 @@ def collect_source_metadata():
         "PKG_SRC_TACHYON_COMPOSER": "tachyon_composer",
         "PKG_SRC_UBUNTU_20_04": "ubuntu_20_04",
         "PKG_SRC_UBUNTU_24_04": "ubuntu_24_04",
+        "PKG_SRC_UBUNTU_26_04": "ubuntu_26_04",
         "PKG_SRC_U_BOOT": "u_boot",
         "PKG_SRC_OVERLAYS": "overlays",
     }

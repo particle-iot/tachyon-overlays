@@ -71,7 +71,24 @@ else
 fi
 
 #add in basic packages nano, curl, wget, git, less, unzip, zip
-if apt_get install -y nano xterm curl wget git less unzip zip sudo device-tree-compiler input-utils gpiod minicom htop i2c-tools dstat nvme-cli usbutils apt-utils inotify-tools pciutils sl neofetch cmake avahi-daemon software-properties-common flatpak equivs iputils-ping net-tools; then
+# This package set is shared across Ubuntu series. apt-get install is atomic, so a
+# single name that a release doesn't ship (e.g. neofetch, removed from the archive
+# in 26.04/resolute) aborts the ENTIRE install. Filter to what this release
+# actually offers and warn on the rest, so one dropped package can't sink the build.
+# 24.04 is unaffected -- every package below is available there, so nothing is skipped.
+BASIC_PKGS="nano xterm curl wget git less unzip zip sudo device-tree-compiler input-utils gpiod minicom htop i2c-tools dstat nvme-cli usbutils apt-utils inotify-tools pciutils sl neofetch cmake avahi-daemon software-properties-common flatpak equivs iputils-ping net-tools"
+avail=""; missing=""
+for p in ${BASIC_PKGS}; do
+  if apt-cache show "${p}" >/dev/null 2>&1; then
+    avail="${avail} ${p}"
+  else
+    missing="${missing} ${p}"
+  fi
+done
+if [ -n "${missing}" ]; then
+  echo "WARNING: skipping basic packages not available in this release:${missing}" >&2
+fi
+if apt_get install -y ${avail}; then
   echo "Basic packages installed successfully."
 else
   echo "Error installing basic packages."

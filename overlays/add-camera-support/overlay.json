@@ -8,7 +8,7 @@
     },
     {
       "type": "chroot-cmd",
-      "cmd": "apt install cheese -y"
+      "cmd": "apt install -y cheese || apt install -y gnome-snapshot"
     },
     {
       "type": "chroot-cmd",

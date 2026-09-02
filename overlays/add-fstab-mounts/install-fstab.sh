@@ -16,4 +16,6 @@ set -euo pipefail
 
 mkdir -p /vendor /boot/dtb_a /persist
 
-update-initramfs -k all -t -u
+# 26.04/resolute's update-initramfs (dracut compat shim) rejects -t; try with it
+# (24.04 initramfs-tools) then fall back without it.
+update-initramfs -k all -t -u 2>/dev/null || update-initramfs -k all -u

@@ -1,10 +1,10 @@
 {
     "name": "add-linux-tools",
-    "description": "Adds linux-tools-qcom package for cpupower etc",
+    "description": "Adds linux-tools (cpupower etc) + lm-sensors, skipping packages a release doesn't ship (linux-tools-qcom is 24.04-only).",
     "commands": [
       {
-        "type": "chroot-cmd",
-        "cmd": "apt update -y && apt install -y linux-tools-qcom lm-sensors"
+        "type": "chroot-script",
+        "script": "install-linux-tools.sh"
       }
     ]
 }
