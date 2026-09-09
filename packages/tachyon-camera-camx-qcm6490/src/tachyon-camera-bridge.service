@@ -6,6 +6,19 @@ Documentation=file:/usr/share/doc/tachyon-camera-camx-qcm6490/README.md
 After=local-fs.target systemd-udev-settle.service
 Wants=systemd-udev-settle.service
 
+# camx-v4l2-bridge publishes through v4l2loopback with exclusive_caps=1. Until
+# its first frame arrives the node advertises OUTPUT, not CAPTURE; a desktop
+# session started in that window lets WirePlumber classify it as "not a
+# camera" for the lifetime of that session. ExecStartPost below performs a
+# bounded real-frame probe, so order the display manager after the whole unit
+# (including ExecStartPost), not merely after the bridge process was forked.
+# The package udev rule also records this known bridge endpoint as CAPTURE;
+# otherwise udev retains :video_output: from the module's much earlier add
+# event even though the kernel has switched the live node to Video Capture.
+# This orders only normal graphical boots; it does not pull a display manager
+# into headless images.
+Before=display-manager.service
+
 # A restart loop is the expected outcome when the camera overlay is not
 # deployed or the module is missing, so bound it instead of hammering the HAL.
 # These two belong in [Unit], not [Service] - systemd silently ignores them
@@ -22,11 +35,12 @@ EnvironmentFile=-/etc/default/tachyon-camera-bridge
 
 ExecStart=/usr/libexec/tachyon-camera-bridge-start
 
-# The node advertises capture only after the first frame is written, and udev
-# cached its capabilities before that happened. Re-announce it once frames are
-# flowing, or desktop apps go on reporting "no camera found" until someone runs
-# udevadm by hand. Backgrounded so a slow camera start does not hold up the
-# unit's own startup.
+# This is intentionally synchronous. A successful G_FMT is too weak: only
+# dequeuing a frame proves that the node has completed its OUTPUT -> CAPTURE
+# transition. The helper then emits remove/add instead of change, because an
+# already-running WirePlumber does not reconsider a V4L device it rejected at
+# initial enumeration. Its 60-second default timeout always returns success so
+# a missing camera is reported in the journal without blocking graphical boot.
 ExecStartPost=-/usr/libexec/tachyon-camera-notify-ready
 
 # CamX opens a lot of descriptors per pipeline; the default 1024 is not enough

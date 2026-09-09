@@ -12,22 +12,29 @@ configure)
     ldconfig
     rm -rf /var/cache/camera/*.bin /var/cache/camera/camxcache* 2>/dev/null || true
 
-    # Pick up the bridge unit and the loopback symlink rule.
+    # Enable on first install only - "$2" carries the previous version and is
+    # empty for a fresh one. deb-systemd-helper edits the target root without
+    # requiring a running PID 1, which matters when Composer installs this
+    # package into an image chroot where /run/systemd/system does not exist.
+    # Keeping enablement outside the live-system check also makes a freshly
+    # flashed image start the bridge on its very first boot.
+    #
+    # Do not re-enable on upgrade: an operator may have disabled the bridge to
+    # use camx-capture or another native HAL3 client, since CamX permits only
+    # one process to hold a camera at a time.
+    if [ -z "$2" ]; then
+        command -v deb-systemd-helper >/dev/null 2>&1 || {
+            echo "deb-systemd-helper is required to enable tachyon-camera-bridge.service" >&2
+            exit 1
+        }
+        deb-systemd-helper unmask tachyon-camera-bridge.service >/dev/null || true
+        deb-systemd-helper enable tachyon-camera-bridge.service >/dev/null
+    fi
+
+    # Reload only when systemd is actually running. Image chroots deliberately
+    # have no system manager; the enable state above is still fully written.
     if [ -d /run/systemd/system ]; then
         systemctl daemon-reload 2>/dev/null || true
-
-        # Enable on first install only - "$2" carries the previous version and
-        # is empty for a fresh one. The camera should work after a reboot
-        # without anyone logging in to start it, but an operator who disabled
-        # the unit on purpose should not have that undone by an upgrade.
-        #
-        # The cost is real and worth stating: the bridge holds the CamX camera
-        # open for as long as it runs, and CamX does not allow two processes on
-        # one camera, so camx-capture and other native HAL3 clients cannot run
-        # alongside it. Stop the unit before using those.
-        if [ -z "$2" ]; then
-            systemctl enable tachyon-camera-bridge.service 2>/dev/null || true
-        fi
     fi
     if command -v udevadm >/dev/null 2>&1; then
         udevadm control --reload-rules 2>/dev/null || true

@@ -40,7 +40,7 @@ The source image is mounted read-only and the result is written as a new raw ext
 ```bash
 make apply-rootfs \
   INPUT_IMAGE=/path/to/rootfs.ext4 \
-  STACK=<stack-name> \
+  STACK=custom-rootfs \
   OUTPUT_IMAGE=output/rootfs-custom.ext4
 ```
 
@@ -78,6 +78,6 @@ filesystem UUID, which is preserved on the output ext4. This prevents a stale
 Composer label such as `cloudimg-rootfs` from leaving `systemd-remount-fs`
 failed on an image whose actual label is `desktop-rootfs`.
 
-`STACK` names a file under `stacks/`. Point it at an incremental stack that lists only the new
-overlays to apply to an already composed rootfs; do not include `ubuntu-common-24.04` or the
-complete release stacks unless their package pins and external resources are also supplied.
+`stacks/custom-rootfs.json` is intentionally an incremental stack. Add only the new overlays that
+must be applied to an already composed rootfs; do not include `ubuntu-common-24.04` or the complete
+release stacks unless their package pins and external resources are also supplied.

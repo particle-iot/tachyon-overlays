@@ -43,3 +43,13 @@ DEVICE=/dev/tachyon-camera
 # interleave per frame - about 55% -> 71% of one core here. Frame rate is
 # unaffected.
 FORMAT=yuyv
+
+# Maximum time graphical boot may wait for CamX to produce its first real
+# capture frame. This closes the WirePlumber discovery race, but it must remain
+# bounded: unplugging an optional camera must not prevent the login screen.
+READY_TIMEOUT_SEC=60
+
+# Limit each one-frame V4L2 probe separately. The outer READY_TIMEOUT_SEC is
+# the policy deadline; this shorter timeout prevents a single wedged DQBUF
+# ioctl from consuming all of it.
+FRAME_PROBE_TIMEOUT=5s

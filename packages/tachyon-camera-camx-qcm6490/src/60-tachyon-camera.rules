@@ -3,4 +3,20 @@
 # Matched on the card label rather than the device number: v4l2loopback is
 # loaded with video_nr=-1 because fixed numbers collide with the iris and CamX
 # nodes, so /dev/videoN is not predictable across boots or module loads.
-SUBSYSTEM=="video4linux", ATTR{name}=="Tachyon CamX Bridge", SYMLINK+="tachyon-camera"
+#
+# Pin ID_V4L_CAPABILITIES to capture for this one purpose-built node. With
+# exclusive_caps=1, the kernel correctly reports OUTPUT during the module's
+# original add event because camx-v4l2-bridge has not opened its producer side
+# yet. 60-persistent-v4l.rules consequently stores ":video_output:" in udev's
+# database. The node later changes to Video Capture, and a fresh v4l_id reports
+# ":capture:", but the kernel capability transition emits no uevent; a desktop
+# WirePlumber starting afterwards consumes the stale database value and creates
+# a V4L Device without a Video/Source.
+#
+# This override is safe only because the card-label match identifies the
+# package-owned bridge endpoint: it is never intended to be an OUTPUT device
+# for desktop clients. The service separately waits for a dequeuable frame
+# before display-manager starts, so publishing the endpoint's intended role
+# here does not expose an unready camera to the graphical session.
+SUBSYSTEM=="video4linux", ATTR{name}=="Tachyon CamX Bridge", \
+    ENV{ID_V4L_CAPABILITIES}=":capture:", SYMLINK+="tachyon-camera"

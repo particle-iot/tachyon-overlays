@@ -80,6 +80,7 @@ apply-kernel: docker-build setup-qemu
 		"$(DOCKER_REF)"
 
 test: docker-build
+	tests/test-camera-notify-ready.sh
 	DOCKER_REF="$(DOCKER_REF)" tests/test-apply-rootfs.sh
 
 clean:
@@ -89,7 +90,7 @@ help:
 	@echo "Modify an existing Tachyon rootfs image"
 	@echo
 	@echo "Usage:"
-	@echo "  make apply-rootfs INPUT_IMAGE=/path/rootfs.ext4 STACK=<stack-name> [OUTPUT_IMAGE=output/rootfs-custom.ext4]"
+	@echo "  make apply-rootfs INPUT_IMAGE=/path/rootfs.ext4 STACK=custom-rootfs [OUTPUT_IMAGE=output/rootfs-custom.ext4]"
 	@echo "  make apply-kernel INPUT_IMAGE=/path/rootfs.ext4 KERNEL_IMAGE_DEB=/path/linux-image.deb \\"
 	@echo "      KERNEL_MODULES_DEB=/path/linux-modules.deb KERNEL_HEADERS_DEB=/path/linux-headers.deb \\"
 	@echo "      KERNEL_COMMON_HEADERS_DEB=/path/linux-common-headers.deb [OUTPUT_IMAGE=output/rootfs-with-kernel.ext4]"
