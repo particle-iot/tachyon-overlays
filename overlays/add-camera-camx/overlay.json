@@ -1,6 +1,6 @@
 {
   "name": "add-camera-camx",
-  "description": "Vendor CamX camera stack (hardware ISP) for the IMX519 on CSI1, 4-lane with autofocus. Installs the userspace stack plus an integration package that owns the per-SoC layout and diverts the stock socid_map. The DT overlay is staged under /usr/share/tachyon/dtbo for the user to deploy - this overlay never touches /boot/dtb_a. EXPERIMENTAL: delivers HAL3 only, ordinary V4L2 clients are not supported.",
+  "description": "Vendor CamX camera stack (hardware ISP) for the IMX519 on CSI1 and CSI2, 4-lane with autofocus. Installs the userspace stack plus an integration package that owns the per-SoC layout and diverts the stock socid_map. Ordinary V4L2 clients are served by camx-v4l2-bridge, which holds the HAL3 camera open and republishes frames on a v4l2loopback node; the service is enabled on first install. The DT overlay is staged under /usr/share/tachyon/dtbo for the user to deploy - this overlay never touches /boot/dtb_a. EXPERIMENTAL: the tuning data is not calibrated for this module, so images are softer than the sensor can manage.",
   "commands": [
     {
       "type": "chroot-cmd",
@@ -8,14 +8,14 @@
     },
     {
       "type": "copy-into-chroot",
-      "source": "files/tachyon-firmware-dragonwing-compat_1.0~tachyon3_all.deb",
-      "destination": "/tmp/tachyon-camera-debs/tachyon-firmware-dragonwing-compat_1.0~tachyon3_all.deb",
+      "source": "files/tachyon-firmware-dragonwing-compat_1.0~tachyon4_all.deb",
+      "destination": "/tmp/tachyon-camera-debs/tachyon-firmware-dragonwing-compat_1.0~tachyon4_all.deb",
       "permissions": "644"
     },
     {
       "type": "copy-into-chroot",
-      "source": "files/tachyon-camera-camx-qcm6490_0.1~exp1_arm64.deb",
-      "destination": "/tmp/tachyon-camera-debs/tachyon-camera-camx-qcm6490_0.1~exp1_arm64.deb",
+      "source": "files/tachyon-camera-camx-qcm6490_0.1~exp7_arm64.deb",
+      "destination": "/tmp/tachyon-camera-debs/tachyon-camera-camx-qcm6490_0.1~exp7_arm64.deb",
       "permissions": "644"
     },
     {

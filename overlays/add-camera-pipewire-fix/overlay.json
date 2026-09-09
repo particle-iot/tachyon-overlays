@@ -1,0 +1,24 @@
+{
+  "name": "add-camera-pipewire-fix",
+  "description": "Patched PipeWire GStreamer source: libgstpipewire.so rebuilt from PipeWire 1.0.5 with always-copy on by default, so pipewiresrc hands downstream its own copy of each frame instead of PipeWire's mapping. Without it, stopping a recording in GNOME Snapshot faults inside gst_video_frame_copy - 18 crashes in 20 attempts on this board, 0 with the patch. Installed through dpkg-divert, so a later gstreamer1.0-pipewire upgrade cannot silently restore the stock plugin. Kept separate from add-camera-camx because it patches a stock package and helps any pipewiresrc consumer, not only CamX. Costs one full-frame copy per frame, about 3% of one core at 1920x1440. Drop it once PipeWire 1.5.81 or later (upstream commit bb1bb07f6) reaches the archive.",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "mkdir -p /tmp/tachyon-camfix"
+    },
+    {
+      "type": "copy-into-chroot",
+      "source": "files/tachyon-gst-pipewire-camfix_1.0_arm64.deb",
+      "destination": "/tmp/tachyon-camfix/tachyon-gst-pipewire-camfix_1.0_arm64.deb",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-script",
+      "script": "install-pipewire-camfix.sh"
+    },
+    {
+      "type": "chroot-rm",
+      "destination": "/tmp/tachyon-camfix"
+    }
+  ]
+}

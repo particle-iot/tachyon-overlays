@@ -131,13 +131,15 @@ install -m 644 src/tachyon-camera.tmpfiles "$STAGE/usr/lib/tmpfiles.d/tachyon-ca
 
 # ---- V4L2 bridge integration -------------------------------------------
 # The bridge binary itself came in with assets/tools above. What follows is
-# everything needed to run it as a service. The unit is NOT enabled here: the
-# bridge holds the camera open exclusively, so turning it on is a deliberate
-# act. Shipping it disabled costs a HAL3-only user nothing.
+# everything needed to run it as a service. postinst enables the unit on first
+# install (including an image chroot) so desktop camera applications work on
+# first boot. An operator can disable it later to free the exclusive HAL3
+# camera for camx-capture; upgrades deliberately preserve that choice.
 install -d -m 755 "$STAGE/usr/libexec"
 install -m 755 src/tachyon-camera-bridge-start "$STAGE/usr/libexec/tachyon-camera-bridge-start"
-# Re-announces the node to udev once frames are flowing; without it desktop
-# apps report "no camera found" until someone runs udevadm by hand.
+# Waits for a dequeuable frame, then gives desktop consumers a remove/add pair.
+# A plain udev change updates properties but does not make an already-running
+# WirePlumber reconsider a V4L node rejected while it was OUTPUT-only.
 install -m 755 src/tachyon-camera-notify-ready "$STAGE/usr/libexec/tachyon-camera-notify-ready"
 install -d -m 755 "$STAGE/lib/systemd/system"
 install -m 644 src/tachyon-camera-bridge.service "$STAGE/lib/systemd/system/tachyon-camera-bridge.service"

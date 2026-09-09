@@ -1,0 +1,28 @@
+//This file supports comments - they are stripped out before the JSON file is parsed
+{
+  "name": "custom-rootfs",
+  "description": "Incremental overlays applied after the complete Tachyon kernel closure. Camera uses CamX hardware ISP; video uses the packaged Iris driver with Gen2 firmware.",
+  "steps": [
+    //The kernel step must run before this stack. add-camera-camx adds the qcom PPA
+    //and sees linux-image's v4l2loopback provider, so it does not install a
+    //second DKMS module. Within this stack, add-camera-camx adds the qcom PPA
+    //and installs the twelve-package CamX closure, and the pipewire fix pins
+    //the exact gstreamer1.0-pipewire version, so it has to see the archive in
+    //its final state. add-video-firmware installs firmware only.
+    {
+      "type": "overlay",
+      "name": "add-camera-camx"
+    },
+    {
+      "type": "overlay",
+      "name": "add-camera-pipewire-fix"
+    },
+    //The kernel package already owns Iris and has Venus disabled, so this step
+    //only has to install the Gen2 firmware the packaged driver requests. It must
+    //not place an updates/qcom-iris.ko ahead of the packaged module.
+    {
+      "type": "overlay",
+      "name": "add-video-firmware"
+    }
+  ]
+}
