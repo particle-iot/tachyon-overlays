@@ -1,0 +1,14 @@
+{
+  "name": "qli-headless-2.0",
+  "description": "Qualcomm Linux 2.0 Open, local RPM composition",
+  "steps": [
+    {
+      "type": "stack",
+      "name": "qli-common-2.0"
+    },
+    {
+      "type": "overlay",
+      "name": "set-headless-default-target"
+    }
+  ]
+}

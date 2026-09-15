@@ -1,0 +1,8 @@
+name: QLI overlay checks
+on: [pull_request, push]
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m unittest test_qli_stacks -v
