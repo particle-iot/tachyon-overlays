@@ -27,4 +27,5 @@ class QLIStacksTest(unittest.TestCase):
                         self.assertIsNone(re.search(r'\b(?:apt|apt-get|dpkg|curl|wget)\b', text))
         visit('qli-headless-2.0')
         self.assertIn('qli-particle', visited)
+        self.assertIn('qli-ssh', visited)
         self.assertEqual(visited[-1], 'set-headless-default-target')

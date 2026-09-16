@@ -1,0 +1,16 @@
+{
+  "name": "qli-ssh",
+  "description": "Enable QLI's existing OpenSSH server with root and user password login using the password supplied during setup.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/sshd_config",
+      "destination": "/etc/ssh/sshd_config",
+      "permissions": "644"
+    },
+    {
+      "type": "chroot-cmd",
+      "cmd": "test -x /usr/sbin/sshd && systemctl enable sshd.socket"
+    }
+  ]
+}

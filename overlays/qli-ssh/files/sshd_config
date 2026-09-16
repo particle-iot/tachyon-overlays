@@ -1,0 +1,11 @@
+# Passwords are supplied by Particle setup; host keys are generated on boot.
+HostKey /etc/ssh/ssh_host_ed25519_key
+HostKey /etc/ssh/ssh_host_rsa_key
+PermitRootLogin yes
+PasswordAuthentication yes
+KbdInteractiveAuthentication no
+PermitEmptyPasswords no
+PubkeyAuthentication yes
+UsePAM yes
+AuthorizedKeysFile .ssh/authorized_keys
+Subsystem sftp internal-sftp
