@@ -12,6 +12,10 @@
     },
     {
       "type": "overlay",
+      "name": "qli-ssh"
+    },
+    {
+      "type": "overlay",
       "name": "add-led-battery-charging-rules"
     },
     {
