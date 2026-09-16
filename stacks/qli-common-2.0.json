@@ -1,0 +1,26 @@
+{
+  "name": "qli-common-2.0",
+  "description": "Qualcomm Linux 2.0 Open, local RPM composition",
+  "steps": [
+    {
+      "type": "overlay",
+      "name": "qli-board"
+    },
+    {
+      "type": "overlay",
+      "name": "qli-particle"
+    },
+    {
+      "type": "overlay",
+      "name": "add-led-battery-charging-rules"
+    },
+    {
+      "type": "overlay",
+      "name": "raise-usb-input-current-limit"
+    },
+    {
+      "type": "overlay",
+      "name": "add-cpu-governor-default"
+    }
+  ]
+}

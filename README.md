@@ -30,3 +30,13 @@ Stacks define which overlays to apply and in what order. Key stacks:
 - **`ubuntu-common-24.04`** - Base system with core packages, networking, firmware, and development tools
 - **`ubuntu-desktop-24.04`** - Extends common with GNOME desktop environment
 - **`ubuntu-headless-24.04`** - Headless server configuration
+
+## Qualcomm Linux 2.0 Open
+
+`qli-headless-2.0` includes `qli-common-2.0`. Run it after composer's pinned
+QLI board preparation (firmware links, audio, ADB identity and setup metadata),
+using overlay-tool `--package-manager rpm-offline --rpm-repo /tmp/particle-rpms`.
+The repository and every RPM must already have been verified against the image
+lock. Missing dependencies abort composition. No APT, update feed, desktop or
+optional application installer is included. Docker, Compose, UPower and network
+services come from QLI. Particle service units are enabled for the next boot.

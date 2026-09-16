@@ -1,0 +1,14 @@
+{
+  "name": "qli-particle",
+  "description": "Install the locked Particle stack from the offline RPM repository and configure headless services.",
+  "commands": [
+    {
+      "type": "chroot-install-package",
+      "package": "particle-linux particle-tachyon-ril particle-tachyon-syscon particle-kigen-lpa jq socat sudo"
+    },
+    {
+      "type": "chroot-script",
+      "script": "configure.sh"
+    }
+  ]
+}

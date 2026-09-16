@@ -1,0 +1,10 @@
+{
+  "name": "qli-board",
+  "description": "Require the pinned composer board, audio and ADB preparation before applying Particle services.",
+  "commands": [
+    {
+      "type": "chroot-cmd",
+      "cmd": "test -L /usr/lib/firmware/tachyon/modem && test -s /usr/lib/firmware/qcom/qcm6490/qcm6490-tachyon-snd-card-tplg.bin && test -f /etc/systemd/system/tachyon-adb.service && test -f /etc/tachyon-qli/build.json"
+    }
+  ]
+}
