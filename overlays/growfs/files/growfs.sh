@@ -26,7 +26,7 @@ if [[ -z "${DEV}" || "${DEV}" == "/dev/root" ]]; then
   DEV="$(awk '$2=="/"{print $1}' /proc/mounts || true)"
 fi
 if [[ -z "${DEV}" || ! -b "${DEV}" ]]; then
-  for cand in "${RESIZE_DEVICE_DEFAULT}" /dev/disk/by-label/cloudimg-rootfs; do
+  for cand in "${RESIZE_DEVICE_DEFAULT}" /dev/disk/by-partlabel/system; do
     if [[ -b "$cand" ]]; then DEV="$cand"; break; fi
   done
 fi

@@ -1,5 +1,11 @@
-# Root filesystem (cloud-image ext4 label)
-LABEL=cloudimg-rootfs  /            ext4  defaults,noatime,errors=remount-ro,commit=30  0  1
+# Root filesystem. Resolve it by GPT partition label: the ext4 label is
+# inherited from the base image (desktop-rootfs on the desktop variant) and
+# is not the cloud-image default, so a LABEL=cloudimg-rootfs entry never
+# matched, systemd-remount-fs failed every boot and / stayed on the
+# initramfs defaults (rw,relatime) with none of these options applied.
+# PARTLABEL=system is what the kernel is booted with (root=PARTLABEL=system)
+# and is the same on every variant.
+PARTLABEL=system       /            ext4  defaults,noatime,errors=remount-ro,commit=30  0  1
 
 # Qualcomm non-HLOS firmware (wlan / gpu / modem) lives on core_nhlos_a
 PARTLABEL=core_nhlos_a /vendor      vfat  ro,nosuid,nodev,noexec,nofail  0  0
