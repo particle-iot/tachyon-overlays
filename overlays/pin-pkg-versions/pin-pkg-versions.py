@@ -8,6 +8,22 @@ DEST = Path("/etc/apt/preferences.d/build-pins.pref")
 DEFAULT_PIN_PRIORITY = 1000
 PKG_ENV_PATTERN = re.compile(r"^PKG_[A-Za-z0-9_]+$")
 
+# Kernel upstream version + ABI, e.g. 6.8.0-1058.59+particle10 -> ("6.8.0", "1058")
+KERNEL_ABI_PATTERN = re.compile(r"^(\d+\.\d+\.\d+)-(\d+)\.")
+
+# The ABI-versioned kernel packages carry the ABI in their NAME
+# (linux-image-6.8.0-1058-particle), so no PKG_<name> env var can ever
+# address them: the PKG_ -> package mapping is lowercase + "_"->"-", which
+# cannot produce dots.  They are also depended on WITHOUT a version:
+#
+#   linux-particle       Depends: linux-image-particle (= <ver>)      <- locked
+#   linux-image-particle Depends: linux-image-<upstream>-<abi>-particle  <- unlocked
+#
+# so apt is free to leave a newer one in place.  Those two packages are the
+# ones that actually contain vmlinuz and the modules, which is how an image
+# can ship a DTB from one kernel build and a kernel from another.
+KERNEL_ABI_STEMS = ("image", "modules", "headers")
+
 def collect_pkg_env():
     """
     Collect env vars of the form PKG_<NAME>=<VERSION> and map to Debian
@@ -23,6 +39,35 @@ def collect_pkg_env():
         if name and ver:
             pkgs[name] = ver
     return pkgs
+
+def expand_kernel_abi_pins(pkgs):
+    """
+    Given a pin on the linux-particle metapackage, also pin the ABI-versioned
+    kernel packages it pulls in.  Their names are fully derivable from the
+    pinned version, so this needs no extra configuration:
+
+      6.8.0-1058.59+particle10 -> linux-image-6.8.0-1058-particle
+                                  linux-modules-6.8.0-1058-particle
+                                  linux-headers-6.8.0-1058-particle
+
+    Without this the metapackages are held at the pinned version while
+    vmlinuz and the modules float to whatever the archive last offered.
+    No-ops on any version string that is not the kernel's scheme.
+    """
+    ver = pkgs.get("linux-particle")
+    if not ver:
+        return 0
+    m = KERNEL_ABI_PATTERN.match(ver)
+    if not m:
+        return 0
+    upstream, abi = m.group(1), m.group(2)
+    added = 0
+    for stem in KERNEL_ABI_STEMS:
+        name = f"linux-{stem}-{upstream}-{abi}-particle"
+        if name not in pkgs:
+            pkgs[name] = ver
+            added += 1
+    return added
 
 def get_priority():
     try:
@@ -42,6 +87,10 @@ def generate_pin_content(packages, priority):
 
 def main():
     pkgs = collect_pkg_env()
+    n_kernel = expand_kernel_abi_pins(pkgs)
+    if n_kernel:
+        print(f"[pin-pkg-versions] Expanded {n_kernel} ABI-versioned kernel pin(s) "
+              f"from linux-particle={pkgs['linux-particle']}", file=sys.stderr)
     if not pkgs:
         print("[pin-pkg-versions] No PKG_* env vars found; nothing to write.", file=sys.stderr)
         # still ensure the directory exists, but don't create an empty file
