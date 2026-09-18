@@ -129,5 +129,48 @@ if [ ${#PACKAGES_TO_INSTALL_URL[@]} -eq 0 ] && [ ${#PACKAGES_TO_INSTALL_APT[@]} 
   echo "[check-pinned-packages] No PKG_* environment variables found"
 fi
 
+# ---------------------------------------------------------------------------
+# Verify what is actually INSTALLED, not just what apt reported.
+#
+# The apt-get install above pins the metapackages, but their dependency on
+# the ABI-versioned packages carries no version:
+#
+#   linux-image-particle  Depends: linux-image-<upstream>-<abi>-particle
+#
+# so apt can satisfy it with a newer build of the same ABI and still exit 0.
+# Those are the packages holding vmlinuz and the modules, and a mismatch
+# means the image ships a DTB and a kernel from different builds.
+# ---------------------------------------------------------------------------
+want="${PKG_linux_particle:-}"
+if [ -n "$want" ]; then
+  abi_part=$(echo "$want" | sed -nE 's/^([0-9]+\.[0-9]+\.[0-9]+)-([0-9]+)\..*/\1-\2/p')
+  if [ -n "$abi_part" ]; then
+    echo "[check-pinned-packages] Verifying installed kernel matches the pin (${want})"
+    kernel_failed=0
+    for stem in image modules; do
+      pkg="linux-${stem}-${abi_part}-particle"
+      got=$(dpkg-query -W -f='${Version}' "$pkg" 2>/dev/null || true)
+      if [ -z "$got" ]; then
+        echo "  ✗ ${pkg} is not installed" >&2
+        kernel_failed=1
+      elif [ "$got" != "$want" ]; then
+        echo "  ✗ ${pkg} is ${got}, pinned ${want}" >&2
+        kernel_failed=1
+      else
+        echo "  ✓ ${pkg} = ${got}"
+      fi
+    done
+    if [ "$kernel_failed" -ne 0 ]; then
+      echo "" >&2
+      echo "========================================================================" >&2
+      echo "[check-pinned-packages] ✗ ERROR: installed kernel does not match the pin" >&2
+      echo "The ABI-versioned kernel packages drifted from PKG_linux_particle." >&2
+      echo "This image would ship a DTB and a kernel from different builds." >&2
+      echo "========================================================================" >&2
+      exit 1
+    fi
+  fi
+fi
+
 echo "[check-pinned-packages] ✓ All pinned packages installed successfully"
 exit 0
