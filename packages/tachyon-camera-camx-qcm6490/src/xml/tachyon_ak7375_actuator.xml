@@ -132,8 +132,15 @@
         <macroStepBoundary>400</macroStepBoundary>
         <!--Infinity step boundary. In Far / backward direction -->
         <infinityStepBoundary>0</infinityStepBoundary>
-        <!--Code per step -->
-        <codePerStep>1</codePerStep>
+        <!--Code per step. 2, not the 1 that Qualcomm's own ak7375_actuator.xml
+            uses: macroStepBoundary is capped at 400 above, so 400x1 only
+            reaches DAC 400 of this 10-bit part's 1023 and stops short of
+            focus - AF swept to the end of travel without ever finding a peak.
+            With 2 it converges on its own (bench: centre-target sharpness
+            5.22 -> 17.73, peak confirmed at 40/100/150cm). 3 measured the
+            same but would command past 1023 and waste step table on codes
+            that clip. Revisit if a module with different lens travel ships. -->
+        <codePerStep>2</codePerStep>
         <!--Q Value to convert float / double to integer format -->
         <qValue>128</qValue>
       </region>
