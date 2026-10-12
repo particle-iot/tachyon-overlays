@@ -12,8 +12,8 @@
 set -u
 
 CAMERA_ID=${CAMERA_ID:-0}
-WIDTH=${WIDTH:-1280}
-HEIGHT=${HEIGHT:-960}
+WIDTH=${WIDTH:-1920}
+HEIGHT=${HEIGHT:-1080}
 DEVICE=${DEVICE:-/dev/tachyon-camera}
 FORMAT=${FORMAT:-yuyv}
 CARD_LABEL="Tachyon CamX Bridge"

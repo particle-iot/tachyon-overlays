@@ -23,8 +23,8 @@ CAMERA_ID=0
 # "4:3 and below the sensor maximum" - 2304x1728 for instance is rejected.
 # Query the real list with:
 #   camx-capture static | grep 'tag=0x000d000a'
-WIDTH=1280
-HEIGHT=960
+WIDTH=1920
+HEIGHT=1080
 
 # Sink to write into. This is the udev symlink, not /dev/videoN: loopback
 # numbering is dynamic and pinning a number collides with the other nodes.
