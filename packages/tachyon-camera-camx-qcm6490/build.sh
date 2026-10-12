@@ -148,6 +148,9 @@ install -m 755 src/tachyon-camera-notify-ready "$STAGE/usr/libexec/tachyon-camer
 install -m 755 src/tachyon-camera-tuning-patch "$STAGE/usr/libexec/tachyon-camera-tuning-patch"
 install -d -m 755 "$STAGE/lib/systemd/system"
 install -m 644 src/tachyon-camera-bridge.service "$STAGE/lib/systemd/system/tachyon-camera-bridge.service"
+# Restarts the bridge cleanly across suspend.
+install -d -m 755 "$STAGE/lib/systemd/system-sleep"
+install -m 755 src/tachyon-camera-sleep "$STAGE/lib/systemd/system-sleep/tachyon-camera"
 install -d -m 755 "$STAGE/etc/default"
 install -m 644 src/tachyon-camera-bridge.default "$STAGE/etc/default/tachyon-camera-bridge"
 install -d -m 755 "$STAGE/etc/modprobe.d"

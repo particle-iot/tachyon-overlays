@@ -1,0 +1,28 @@
+#!/bin/sh
+# systemd-sleep hook: stop the camera bridge before suspend, restart it after.
+#
+# Suspending while the bridge streams cuts the sensor's power under CamX; on
+# resume the sensor stops answering and the bridge aborts on every restart,
+# sometimes until a power cycle. A clean stop and a fresh start avoid that.
+# Only a bridge that was running is restarted.
+
+UNIT=tachyon-camera-bridge.service
+STATE=/run/tachyon-camera-stopped-for-sleep
+
+case "$1" in
+pre)
+    rm -f "$STATE"
+    if systemctl is-active --quiet "$UNIT"; then
+        touch "$STATE"
+        systemctl stop "$UNIT"
+    fi
+    ;;
+post)
+    if [ -e "$STATE" ]; then
+        rm -f "$STATE"
+        # The bridge takes ~30s to its first frame; don't hold up resume.
+        systemctl --no-block start "$UNIT"
+    fi
+    ;;
+esac
+exit 0
