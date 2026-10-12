@@ -257,6 +257,11 @@ for t in camx-enum camx-capture camx-v4l2-bridge; do
 done
 echo "== tools built with $("$CC" -dumpversion) =="
 
+# vp8enc tracer for the desktop camera apps; it declares its own GStreamer ABI,
+# so the same stock toolchain builds it.
+install -d -m 755 assets/gst
+"$CC" -O2 -Wall -Wextra -fPIC -shared -o assets/gst/libgsttachyoncam.so src/gst-tachyoncam.c
+
 echo
 echo "== assets =="
 ls -la assets/camera assets/dtbo assets/tools

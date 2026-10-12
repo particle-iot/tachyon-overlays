@@ -64,6 +64,7 @@ com.qti.tuned.sunny_imx519.bin"
 REQUIRED_DTBO="combined-dtb-vendor-camera-imx519-csi1-4lane.dtbo
 combined-dtb-vendor-camera-imx519-csi2-4lane.dtbo"
 REQUIRED_TOOLS="camx-enum camx-capture camx-v4l2-bridge"
+REQUIRED_GST="libgsttachyoncam.so"
 
 for f in $REQUIRED_CAMERA; do
     [ -f "assets/camera/$f" ] || { echo "missing asset: assets/camera/$f" >&2; exit 1; }
@@ -73,6 +74,9 @@ for f in $REQUIRED_TOOLS; do
 done
 for f in $REQUIRED_DTBO; do
     [ -f "assets/dtbo/$f" ] || { echo "missing dtbo: assets/dtbo/$f" >&2; exit 1; }
+done
+for f in $REQUIRED_GST; do
+    [ -f "assets/gst/$f" ] || { echo "missing gst plugin: assets/gst/$f" >&2; exit 1; }
 done
 
 # The sensor plugin is a prebuilt vendor artifact that build-assets.sh patches,
@@ -127,6 +131,11 @@ install -d -m 755 "$STAGE/usr/share/tachyon/dtbo"
 install -m 644 assets/dtbo/* "$STAGE/usr/share/tachyon/dtbo/"
 install -d -m 755 "$STAGE/usr/bin"
 install -m 755 assets/tools/* "$STAGE/usr/bin/"
+# vp8enc tuning for Snapshot/Cheese recordings, loaded by the environment.d entry.
+install -d -m 755 "$STAGE/usr/lib/aarch64-linux-gnu/gstreamer-1.0"
+install -m 644 assets/gst/libgsttachyoncam.so "$STAGE/usr/lib/aarch64-linux-gnu/gstreamer-1.0/"
+install -d -m 755 "$STAGE/usr/lib/environment.d"
+install -m 644 src/90-tachyon-camera.conf "$STAGE/usr/lib/environment.d/90-tachyon-camera.conf"
 echo "staged $(ls -1 assets/camera | wc -l) camera assets, $(ls -1 assets/tools | wc -l) tools, $(ls -1 assets/dtbo | wc -l) dtbo"
 
 # /var/cache/camera via tmpfiles, not by relying on CamX's first root run
