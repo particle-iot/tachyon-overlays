@@ -199,6 +199,8 @@ chmod 755 "$STAGE"/usr/bin/*
 # The blanket 644 above catches this one too, and a non-executable ExecStart
 # fails the unit at start with a bare 203/EXEC.
 chmod 755 "$STAGE"/usr/libexec/*
+# systemd-sleep silently skips a hook that is not executable.
+chmod 755 "$STAGE"/lib/systemd/system-sleep/*
 
 ver=$(awk '/^Version:/ {print $2}' pkg/DEBIAN/control)
 deb="$OUT/tachyon-camera-camx-qcm6490_${ver}_arm64.deb"
