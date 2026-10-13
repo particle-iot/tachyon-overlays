@@ -255,10 +255,15 @@ __attribute__((unused)) static void consume_release_fence(int fd)
 	close(fd);
 }
 
+/* Optional per-result metadata hook; the bridge sets it to trace AF. */
+static void (*g_result_meta_hook)(uint32_t frame, const void *meta);
+
 static void on_result(const struct camera3_callback_ops *cb,
 		      const struct camera3_capture_result *r)
 {
 	(void)cb;
+	if (r && r->result && g_result_meta_hook)
+		g_result_meta_hook(r->frame_number, r->result);
 	if (!r || r->num_output_buffers == 0)
 		return;                   /* metadata-only partial result */
 	pthread_mutex_lock(&g_lock);
@@ -415,6 +420,27 @@ __attribute__((unused)) static int meta_set(void *blob, uint32_t tag, double val
 		return 0;
 	}
 	fprintf(stderr, "  meta_set tag=0x%08x NOT PRESENT\n", tag);
+	return -1;
+}
+
+/* Read value[0] of an entry as a double. Returns 0 on success, -1 if absent. */
+__attribute__((unused)) static int meta_get(const void *blob, uint32_t tag, double *val)
+{
+	const struct cam_meta *m = blob;
+	struct cam_meta_entry *e = meta_entries(blob);
+	for (uint32_t i = 0; i < m->entry_count; i++) {
+		if (e[i].tag != tag || e[i].type >= 6)
+			continue;
+		const uint8_t *p = meta_payload((void *)blob, &e[i]);
+		switch (e[i].type) {
+		case 0: *val = *(const uint8_t *)p;  return 0;
+		case 1: *val = *(const int32_t *)p;  return 0;
+		case 2: *val = *(const float *)p;    return 0;
+		case 3: *val = (double)*(const int64_t *)p; return 0;
+		case 4: *val = *(const double *)p;   return 0;
+		default: return -1;
+		}
+	}
 	return -1;
 }
 

@@ -71,6 +71,40 @@ static const char *g_fourcc_name = "NV12";
 #define IDLE_AFTER_SEC  3          /* grace before slowing down */
 
 /*
+ * Continuous AF rescans only on a scene change, and a scan run at IDLE_FPS
+ * mostly lands out of focus (4 of 5 starts on the bench), so the picture stayed
+ * soft until someone waved at the lens. Hence full rate for the first
+ * FULL_RATE_AFTER_START_SEC, and a forced scan whenever a consumer returns.
+ * The scan is an AUTO-mode START - in CONTINUOUS_PICTURE, START just locks the
+ * lens where it is - and continuous AF resumes AF_RESTORE_FRAMES later.
+ */
+#define FULL_RATE_AFTER_START_SEC 20
+#define AF_RESTORE_FRAMES         90          /* ~3 s; a scan takes ~0.5 s */
+#define TAG_AF_MODE               0x00010007  /* ANDROID_CONTROL_AF_MODE */
+#define TAG_AF_TRIGGER            0x00010009  /* ANDROID_CONTROL_AF_TRIGGER */
+#define AF_MODE_AUTO              1
+#define AF_MODE_CONTINUOUS        4           /* CONTINUOUS_PICTURE, the default */
+#define AF_TRIGGER_IDLE           0
+#define AF_TRIGGER_START          1
+
+/* TACHYON_AF_DEBUG=1 logs each AF state change. */
+#define TAG_AF_STATE              0x00010020  /* ANDROID_CONTROL_AF_STATE */
+
+static void trace_af(uint32_t frame, const void *meta)
+{
+	static const char *name[] = { "INACTIVE", "PASSIVE_SCAN", "PASSIVE_FOCUSED",
+		"ACTIVE_SCAN", "FOCUSED_LOCKED", "NOT_FOCUSED_LOCKED", "PASSIVE_UNFOCUSED" };
+	static int last = -1;
+	double st;
+
+	if (meta_get(meta, TAG_AF_STATE, &st) != 0 || (int)st == last)
+		return;
+	last = (int)st;
+	printf("af frame %u: %s\n", frame, last >= 0 && last < 7 ? name[last] : "?");
+	fflush(stdout);
+}
+
+/*
  * Is anyone other than us holding the sink open?
  *
  * v4l2loopback publishes max_openers but not a current count, so this walks
@@ -300,6 +334,8 @@ int main(int argc, char **argv)
 	cam = (struct camera3_device *)dev;
 
 	static struct camera3_callback_ops cbs = { on_result, on_notify, NULL, NULL };
+	if (getenv("TACHYON_AF_DEBUG"))
+		g_result_meta_hook = trace_af;
 	rc = cam->ops->initialize(dev, &cbs);
 	if (rc) { fprintf(stderr, "initialize rc=%d\n", rc); goto out; }
 
@@ -416,6 +452,8 @@ int main(int argc, char **argv)
 	/* Idle throttling state; see the notes above sink_has_consumer(). */
 	struct timespec last_check = t0, last_seen = t0;
 	int idle = 0;
+	int af_scan_pending = 0;
+	uint32_t af_restore_at = 0;   /* frame to go back to continuous AF, 0 = none */
 
 	while (!g_stop) {
 		struct timespec ts;
@@ -536,10 +574,12 @@ int main(int argc, char **argv)
 				last_seen = now;
 				if (idle) {
 					idle = 0;
-					printf("consumer attached, full rate\n");
+					af_scan_pending = 1;
+					printf("consumer attached, full rate, refocusing\n");
 					fflush(stdout);
 				}
-			} else if (!idle && now.tv_sec - last_seen.tv_sec >= IDLE_AFTER_SEC) {
+			} else if (!idle && now.tv_sec - last_seen.tv_sec >= IDLE_AFTER_SEC &&
+			           now.tv_sec - t0.tv_sec >= FULL_RATE_AFTER_START_SEC) {
 				idle = 1;
 				printf("no consumer, throttling to %d fps\n", IDLE_FPS);
 				fflush(stdout);
@@ -560,6 +600,20 @@ int main(int argc, char **argv)
 			if (g_stop) break;
 		}
 
+		/* The trigger goes on one request only (the HAL copies settings on
+		 * submit, so it is cleared right after); the AF mode persists. */
+		int af_trigger = AF_TRIGGER_IDLE;
+		if (af_scan_pending) {
+			af_scan_pending = 0;
+			af_trigger = AF_TRIGGER_START;
+			af_restore_at = next_frame + AF_RESTORE_FRAMES;
+			meta_set(settings, TAG_AF_MODE, AF_MODE_AUTO);
+			meta_set(settings, TAG_AF_TRIGGER, af_trigger);
+		} else if (af_restore_at && next_frame >= af_restore_at) {
+			af_restore_at = 0;
+			meta_set(settings, TAG_AF_MODE, AF_MODE_CONTINUOUS);
+		}
+
 		/* Hand the buffer back so the pipeline never runs dry. */
 		struct camera3_capture_request req;
 		memset(&req, 0, sizeof(req));
@@ -568,6 +622,8 @@ int main(int argc, char **argv)
 		req.num_output_buffers = 1;
 		req.output_buffers = &g_slots[k].sb;
 		rc = cam->ops->process_capture_request(dev, &req);
+		if (af_trigger != AF_TRIGGER_IDLE)
+			meta_set(settings, TAG_AF_TRIGGER, AF_TRIGGER_IDLE);
 		if (rc) { fprintf(stderr, "resubmit rc=%d\n", rc); goto out; }
 	}
 
