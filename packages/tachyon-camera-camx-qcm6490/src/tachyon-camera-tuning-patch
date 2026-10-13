@@ -2,15 +2,19 @@
 """Stop auto-exposure oscillating in the shipped IMX519 tuning binary.
 
 The borrowed vendor tuning makes AE hunt, which reads as flicker in video
-(luma peak-to-peak 13-15 of 255). Both values have to be raised; raising only
-the first leaves a separate ~3-frame oscillation that reappears when the light
-changes:
+(luma peak-to-peak 13-15 of 255):
 
   tolMultUnitStepSize 2 -> 5   (Convergence.xml, fastConv)
       Tolerance for deciding the scene really changed. At 2, noise crosses it.
 
-  DFSExpIndexTolerance 1.0 -> 3.0   (aecSkipCtrl.xml)
-      Tolerance for calling AE settled. At 1.0 it never does, and keeps trimming.
+  DFSExpIndexTolerance 1.0 -> 5.0   (aecSkipCtrl.xml)
+      Tolerance for calling AE settled. Below it AE keeps trimming in a
+      ~3-frame oscillation; 3.0 still did so in some light (A/B: 102 jumps
+      in 300 frames at 3.0, 0 at 5.0).
+
+  aggressiveness 0.8 -> 0.4   (Convergence.xml, fastConv)
+      Share of the remaining error corrected per update. Halved so the
+      brightness change when someone walks past is gradual, not a jump.
 
 Result: peak-to-peak 0.3-0.6, AE still tracking light (EV -6/0/+6 -> 85/126/163).
 
@@ -38,7 +42,8 @@ TUNING = "/usr/lib/qcm6490/camera/com.qti.tuned.sunny_imx519.bin"
 #   (offset, stock bytes, wanted bytes, name)
 EDITS = [
     (355330, b"\x02",     b"\x05",     "tolMultUnitStepSize 2 -> 5"),
-    (361401, b"\x80\x3f", b"\x40\x40", "DFSExpIndexTolerance 1.0 -> 3.0"),
+    (355340, b"\x4c\x3f", b"\xcc\x3e", "aggressiveness 0.8 -> 0.4"),
+    (361401, b"\x80\x3f", b"\xa0\x40", "DFSExpIndexTolerance 1.0 -> 5.0"),
 ]
 EXPECT_SIZE = 1294982
 
