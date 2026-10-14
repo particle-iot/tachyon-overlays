@@ -16,6 +16,7 @@ WIDTH=${WIDTH:-1920}
 HEIGHT=${HEIGHT:-1080}
 DEVICE=${DEVICE:-/dev/tachyon-camera}
 FORMAT=${FORMAT:-yuyv}
+ANTIBANDING=${ANTIBANDING:-auto}
 CARD_LABEL="Tachyon CamX Bridge"
 BRIDGE=/usr/bin/camx-v4l2-bridge
 
@@ -34,6 +35,10 @@ esac
 case "$FORMAT" in
     yuyv|nv12) ;;
     *) die "FORMAT must be yuyv or nv12, got '$FORMAT'" ;;
+esac
+case "$ANTIBANDING" in
+    50|60|auto) ;;
+    *) die "ANTIBANDING must be 50, 60 or auto, got '$ANTIBANDING'" ;;
 esac
 
 [[ -x "$BRIDGE" ]] || die "$BRIDGE missing - is tachyon-camera-camx-qcm6490 installed?"
@@ -74,4 +79,4 @@ actual=$(<"$name_file")
 [[ "$actual" == "$CARD_LABEL" ]] || die "$DEVICE points at '$actual', expected '$CARD_LABEL'"
 
 exec "$BRIDGE" --v4l2-output "$DEVICE" --camera "$CAMERA_ID" \
-     --size "${WIDTH}x${HEIGHT}" --format "$FORMAT"
+     --size "${WIDTH}x${HEIGHT}" --format "$FORMAT" --antibanding "$ANTIBANDING"

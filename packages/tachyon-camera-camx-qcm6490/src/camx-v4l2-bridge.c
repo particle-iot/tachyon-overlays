@@ -87,6 +87,16 @@ static const char *g_fourcc_name = "NV12";
 #define AF_TRIGGER_IDLE           0
 #define AF_TRIGGER_START          1
 
+/*
+ * Anti-banding keeps exposures to whole periods of the mains light flicker.
+ * auto detects 50 or 60 Hz; the option exists to force one where detection
+ * picks wrong.
+ */
+#define TAG_AE_ANTIBANDING        0x00010000  /* ANDROID_CONTROL_AE_ANTIBANDING_MODE */
+#define AE_ANTIBANDING_50HZ       1
+#define AE_ANTIBANDING_60HZ       2
+#define AE_ANTIBANDING_AUTO       3
+
 /* TACHYON_AF_DEBUG=1 logs each AF state change. */
 #define TAG_AF_STATE              0x00010020  /* ANDROID_CONTROL_AF_STATE */
 
@@ -229,6 +239,8 @@ static void usage(const char *argv0)
 "  --size WxH           capture size, must be one the HAL advertises. default 1280x960\n"
 "  --format FMT         nv12 (default) or yuyv. yuyv costs an extra conversion\n"
 "                       but is what desktop camera apps expect from a webcam\n"
+"  --antibanding MODE   50, 60 or auto: mains frequency AE keeps exposures\n"
+"                       in step with. default auto\n"
 "\n"
 "Holds the HAL3 camera open for as long as it runs; native clients such as\n"
 "camx-capture cannot use that camera meanwhile. Stops cleanly on SIGTERM.\n",
@@ -242,17 +254,19 @@ int main(int argc, char **argv)
 
 	const char *sink_path = NULL;
 	int cam_index = 0, W = 1280, H = 960;
+	int antibanding = AE_ANTIBANDING_AUTO;
 
 	static struct option opts[] = {
 		{ "v4l2-output", required_argument, 0, 'o' },
 		{ "camera",      required_argument, 0, 'c' },
 		{ "size",        required_argument, 0, 's' },
 		{ "format",      required_argument, 0, 'f' },
+		{ "antibanding", required_argument, 0, 'a' },
 		{ "help",        no_argument,       0, 'h' },
 		{ 0, 0, 0, 0 }
 	};
 	int c;
-	while ((c = getopt_long(argc, argv, "o:c:s:f:h", opts, NULL)) != -1) {
+	while ((c = getopt_long(argc, argv, "o:c:s:f:a:h", opts, NULL)) != -1) {
 		switch (c) {
 		case 'o': sink_path = optarg; break;
 		case 'c':
@@ -275,6 +289,12 @@ int main(int argc, char **argv)
 				fprintf(stderr, "bad --format, want nv12 or yuyv\n");
 				return 2;
 			}
+			break;
+		case 'a':
+			if (!strcmp(optarg, "50"))        antibanding = AE_ANTIBANDING_50HZ;
+			else if (!strcmp(optarg, "60"))   antibanding = AE_ANTIBANDING_60HZ;
+			else if (!strcmp(optarg, "auto")) antibanding = AE_ANTIBANDING_AUTO;
+			else { fprintf(stderr, "bad --antibanding, want 50, 60 or auto\n"); return 2; }
 			break;
 		case 'h': usage(argv[0]); return 0;
 		default:  usage(argv[0]); return 2;
@@ -408,6 +428,7 @@ int main(int argc, char **argv)
 	settings = malloc(rom->size);
 	if (!settings) { perror("malloc settings"); goto out; }
 	memcpy(settings, ro, rom->size);
+	meta_set(settings, TAG_AE_ANTIBANDING, antibanding);
 
 	uint32_t next_frame = 0;
 	for (int k = 0; k < NBUF; k++) {

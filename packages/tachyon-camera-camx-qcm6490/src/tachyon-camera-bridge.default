@@ -44,6 +44,11 @@ DEVICE=/dev/tachyon-camera
 # unaffected.
 FORMAT=yuyv
 
+# Mains frequency of the room lighting: auto, 50 or 60. AE keeps exposures to
+# whole light periods so lights do not band; auto detects which. Force 50 or 60
+# only if banding shows under artificial light.
+ANTIBANDING=auto
+
 # Maximum time graphical boot may wait for CamX to produce its first real
 # capture frame. This closes the WirePlumber discovery race, but it must remain
 # bounded: unplugging an optional camera must not prevent the login screen.
