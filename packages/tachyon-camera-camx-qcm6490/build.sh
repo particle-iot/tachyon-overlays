@@ -79,10 +79,8 @@ for f in $REQUIRED_GST; do
     [ -f "assets/gst/$f" ] || { echo "missing gst plugin: assets/gst/$f" >&2; exit 1; }
 done
 
-# The sensor plugin is a prebuilt vendor artifact that build-assets.sh patches,
-# so validate it positively rather than only looking for the one known defect.
-# Checking "does not contain libsync" alone passes for a truncated file, an
-# x86 build, or anything readelf cannot parse at all.
+# Validate the sensor plugin positively: a truncated file, an x86 build, or
+# anything readelf cannot parse must stop the build here.
 PLUGIN=assets/camera/com.qti.sensor.imx519.so
 
 # readelf exits 0 on a truncated file while complaining on stderr, so treat
@@ -103,30 +101,26 @@ case "$hdr" in
 esac
 
 # CamX resolves exactly this entry point out of the plugin; without it the
-# sensor is silently absent from enumeration.
+# camera still runs, but on the generic gain math.
 dyn=$(readelf -dW "$PLUGIN") || { echo "$PLUGIN: cannot read .dynamic" >&2; exit 1; }
+# The old Ubuntu 20.04 prebuilt has no such soname; it reads the register
+# addresses at the wrong offsets, so refuse it if it comes back.
+case "$dyn" in
+    *"[com.qti.sensor.imx519.so.0]"*) ;;
+    *) echo "$PLUGIN: not built by build-assets.sh (soname)" >&2; exit 1 ;;
+esac
 syms=$(readelf -sW --dyn-syms "$PLUGIN") || { echo "$PLUGIN: cannot read .dynsym" >&2; exit 1; }
 case "$syms" in
     *GetSensorLibraryAPIs*) ;;
     *) echo "$PLUGIN: does not export GetSensorLibraryAPIs" >&2; exit 1 ;;
 esac
 
-# The stock plugin carries a DT_NEEDED on libsync.so.0 that nothing on this
-# platform provides. It is a dead dependency: the CamX build system put -lsync
-# into CMAKE_CXX_FLAGS ahead of --as-needed, so it got recorded even though the
-# plugin references no sync_*/fence symbol at all. Verified - zero undefined
-# sync symbols, and the camera enumerates and captures fine on a system with no
-# libsync present. build-assets.sh strips it; assets must ship without it.
-case "$dyn" in
-    *libsync*)
-        echo "$PLUGIN: still has DT_NEEDED libsync.so.0" >&2
-        echo "  run ./build-assets.sh, which strips it" >&2
-        echo "  (preferred long-term fix: rebuild the plugin without -lsync)" >&2
-        exit 1 ;;
-esac
-
 install -d -m 755 "$STAGE/usr/lib/qcm6490/camera"
 install -m 644 assets/camera/* "$STAGE/usr/lib/qcm6490/camera/"
+# CamX looks the plugin up as /usr/lib/camera/*.sensor.<name>.so.0 and, if
+# that name is missing, silently falls back to generic gain math that is wrong
+# for this sensor - which made auto-exposure hunt and the picture flicker.
+ln -sf com.qti.sensor.imx519.so "$STAGE/usr/lib/qcm6490/camera/com.qti.sensor.imx519.so.0"
 install -d -m 755 "$STAGE/usr/share/tachyon/dtbo"
 install -m 644 assets/dtbo/* "$STAGE/usr/share/tachyon/dtbo/"
 install -d -m 755 "$STAGE/usr/bin"

@@ -21,8 +21,8 @@ service and no stable device node, so it is a bring-up aid rather than a
 supported interface. A proper HAL3-to-V4L2 bridge is a separate deliverable.
 
 **Image quality:** tuning is borrowed from a different module and is not
-calibrated for this one. Auto-exposure visibly hunts as a result — roughly
-0.225 EV at 1.8 Hz, which reads as a slow flicker in video.
+calibrated for this one. Exposure is steady, but colour is off - indoor
+scenes under LED light come out with a cyan cast.
 
 ## Enabling it
 

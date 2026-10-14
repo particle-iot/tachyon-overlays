@@ -8,12 +8,12 @@ guessing. Hashes are SHA256.
 
 | Input | SHA256 | Origin |
 |---|---|---|
-| `vendor/com.qti.sensor.imx519.so` | `124ec7e85ec82a6d90779ab1de5a1ea725c38f7373ca5af19eedc74e2b0dd824` | Qualcomm chi-cdk prebuilt, Quectel R114 SDK |
+| `$CHICDK/oem/qcom/sensor/imx519/imx519_sensor.cpp` | — | chi-cdk source, Quectel r108 SDK (r1.0_00108.0); compiled by `build-assets.sh` |
 | `vendor/com.qti.tuned.sunny_imx519.bin` | `56003d9d5323c57ff97946928646ca947176b107d80d4f4be4488ce8ed447737` | chi-cdk tuning project `tuning/sm8250_sunny_imx519` — see below |
 | `ParameterParser` | `2724822ab1ce93089e050414ee1b85fa8eb0a45dcc1bb0face0c7b4a3a792be3` | `chi-cdk/tools/buildbins/linux64/`, V5.5.1 (2411131018) |
 | `src/xml/*.xml`, `src/dts/*` | — | written here; the sensor register sequences derive from Quectel's `imx519_sensor.xml` |
 
-**Neither binary comes from the PPA.** `qcom-chicdk-qcm6490` 1.0.6+repack2
+**Neither the plugin nor the tuning comes from the PPA.** `qcom-chicdk-qcm6490` 1.0.6+repack2
 ships eight sensor plugins — imx476, imx481, imx586, imx686, cmk_imx577,
 ov9282, s5k3m5, max9296a_ar0231 — and seven tuning bins, all `kodiak_`-prefixed.
 IMX519 appears in neither set. (It does ship
@@ -25,9 +25,10 @@ different artifact and unused here.)
 `chi-cdk/oem/qcom/buildbins/.../com.qti.tuned.sunny_imx519.mk` names its input
 as the tuning project `tuning/sm8250_sunny_imx519`, run through
 ParameterParser. So this data was calibrated for a **Sunny IMX519 module on
-SM8250**, not for the module on this board — which is the direct cause of two
-known defects: auto-exposure hunts (~0.225 EV at 1.8 Hz), and the LSC mesh is
-calibrated for 4656x3496 and misaligns on binned modes.
+SM8250**, not for the module on this board. Known effects: a cyan cast
+indoors, and the LSC mesh is calibrated for 4656x3496 and misaligns on binned
+modes. (The auto-exposure flicker once blamed on it was the sensor plugin; see
+below.)
 
 Its exact build is **unconfirmed**: our copy hashes `56003d9d…`, while the two
 copies in the Ubuntu 20.04 QTI tree hash `2b98f678…` (debug) and `ed3f73e9…`
@@ -35,58 +36,33 @@ copies in the Ubuntu 20.04 QTI tree hash `2b98f678…` (debug) and `ed3f73e9…`
 matters only for byte-level reproducibility — replacing it with data calibrated
 for this module is the real fix, and is tracked separately.
 
-### Identifying the plugin build
+## The sensor plugin
 
-It carries no `.note.gnu.build-id`; it is a Yocto/OE build that uses
-`.gnu_debuglink` instead, pointing at `com.qti.sensor.imx519_cam1.so`
-(CRC `5984a84a`). The same code appears in the Ubuntu 20.04 QTI robotics image
-under that original name — a different link of the same sources (whole-file
-hash `53efafa6…`, debuglink CRC `e7ceeeb8…`), whose `.text` is byte-identical
-to ours. That shared `.text` hash is what pins the code identity:
+`com.qti.sensor.imx519.so` is compiled from the chi-cdk source against the
+chi-cdk headers. It must match the CamX it runs under: CamX passes it a
+`SensorExposureRegInfo` and the plugin reads the exposure and gain register
+addresses out of it by offset. `build-assets.sh` asserts the offsets this
+CamX uses (exposure 824, analog gain 832, digital gain 840).
 
-    .text  97ffea788e76af547fd024aa28508bf6c48b41a780902bfadc97127322e6c005
+Up to 0.1~exp7 a prebuilt from the Ubuntu 20.04 QTI image was shipped. It was
+never loaded, because CamX looks for `/usr/lib/camera/*.sensor.imx519.so.0`
+and only `.so` was installed; CamX then used generic gain math
+(`512 - 512/gain`) that gives this sensor about half the requested gain, so
+auto-exposure kept chasing its target and the picture flickered. Given the
+right name, it wrote exposure to 0x0000 and gain to the short-exposure
+registers: its headers predate `preShutterLengthLinesAddr`, so every address
+after it is one field off. Hence the rebuild, and the `.so.0` link `build.sh`
+now installs.
 
-## The one edit applied to a vendor binary
-
-`build-assets.sh` runs exactly one:
-
-    patchelf --remove-needed libsync.so.0 com.qti.sensor.imx519.so
-
-**Why.** The recorded `DT_NEEDED libsync.so.0` has no provider on this platform
-and no referencing symbol in the plugin — `nm -D --undefined-only` matches zero
-`sync_*`/`fence` symbols. The CamX build put `-lsync` into `CMAKE_CXX_FLAGS`
-ahead of `--as-needed`, so the linker recorded a dependency nothing uses. None
-of the eight plugins that *do* ship in `qcom-chicdk-qcm6490` carry it, which
-places the defect in this particular OE recipe rather than in CamX.
-
-**What it changes.** 92 bytes, all inside `.dynamic` (file offsets 7545–7977).
-File size, section count, section layout and `.gnu_debuglink` are unchanged;
-`.text` matches the hash above; the seven exported symbols are unchanged
-(`GetSensorLibraryAPIs`, `CalculateExposure`, `FillExposureSettings`,
-`GetLineCount`, `NormalizeLineCount`, `ParseSensorMetaData`,
-`VerifyAnalogGain`). Symbolised debugging still works — it resolves through
-`.gnu_debuglink`, which this edit does not touch. `build-assets.sh` asserts the
-input hash, the unchanged `.text`, the absence of libsync and the presence of
-`GetSensorLibraryAPIs`, and `build.sh` re-checks the last two at package time.
-
-Verified on hardware with libsync absent from the whole system: `camx-enum`
-reports `cameras: 1`, `camx-capture` writes a frame with 2764800/2764800
-non-zero luma samples.
-
-**Preferred long-term fix:** rebuild the plugin from chi-cdk sources without
-`-lsync`, and drop both `vendor/` and the patch step.
+Verified on hardware: register writes go to 0x0202 (exposure), 0x0204 (analog
+gain, `1024 - 1024/gain`) and 0x020E (digital gain); auto-exposure settles in
+about seven updates and then stops writing.
 
 ## Output hashes
 
-Reproduced by `./build-assets.sh`:
-
-| Output | SHA256 |
-|---|---|
-| `assets/camera/com.qti.sensor.imx519.so` | `c2a77eda3837d08150155c1f7bc88fae6616904620682af5498dd28c304ce5a4` |
-
-The sensormodule/socid_map bins and the dtbos are regenerated from `src/` on
-every run; the parser and dtc are deterministic, but the hashes are not pinned
-here because editing the XML is a normal part of retargeting this package.
+Nothing in `assets/` is pinned. The bins, dtbos and plugin are regenerated
+from `src/` and chi-cdk on every run; the tools are deterministic, but editing
+the XML is a normal part of retargeting this package.
 
 ## Licensing — UNRESOLVED
 
@@ -99,7 +75,7 @@ the easier case and do not apply to these files:
 
 | Artifact | What it is |
 |---|---|
-| `vendor/com.qti.sensor.imx519.so` | Qualcomm proprietary binary |
+| `assets/camera/com.qti.sensor.imx519.so` (generated) | compiled from Qualcomm proprietary source |
 | `vendor/com.qti.tuned.sunny_imx519.bin` | Qualcomm proprietary tuning data |
 | `src/xml/tachyon_imx519_sensor.xml` | derived from Quectel's `imx519_sensor.xml` — register sequences are the substance of the file |
 | `src/xml/tachyon_ak7375_actuator.xml` | derived from the R114 `ak7377_actuator.xml` |
@@ -112,7 +88,7 @@ Two separate questions, and a "yes" to the first does not imply the second:
 
 1. May these files be **redistributed**?
 2. May they be **modified and then redistributed**? This matters for the
-   patchelf step and for every derived XML above.
+   compiled plugin and for every derived XML above.
 
 The generated `.bin` files are outputs of a proprietary tool applied to
 proprietary inputs; do not assume they are cleaner to ship than their sources.

@@ -169,39 +169,18 @@ else
     echo "== skipping fdtoverlay check (set BASE_DTB=/path/to/combined-dtb.dtb) =="
 fi
 
-# ---- prebuilt vendor sensor plugin --------------------------------------
-# vendor/com.qti.sensor.imx519.so is a Qualcomm binary that no PPA package
-# ships (qcom-chicdk-qcm6490 carries eight sensor plugins, IMX519 is not among
-# them). It needs one edit before it can be used here, so derive the asset
-# rather than committing a hand-patched copy nobody can reproduce.
-#
-# The edit: drop DT_NEEDED libsync.so.0. Nothing on this platform provides
-# that library and the plugin references no symbol from it - the CamX build
-# put -lsync into CMAKE_CXX_FLAGS ahead of --as-needed, so the linker recorded
-# a dependency with zero references. See PROVENANCE.md.
-SRC_PLUGIN=vendor/com.qti.sensor.imx519.so
+# ---- sensor plugin ------------------------------------------------------
+# CamX finds the plugin by name and then hands it a SensorExposureRegInfo,
+# from which the plugin reads the exposure and gain register addresses by
+# offset. So it must be built against the same chi-cdk headers as the CamX it
+# runs under. The prebuilt we used to ship came from the Ubuntu 20.04 stack,
+# whose struct has no preShutterLengthLinesAddr: every address after it was
+# read one slot off (exposure written to 0x0000, gain to the short-exposure
+# registers). Build it from the chi-cdk source instead.
+SRC_PLUGIN="$CHICDK/oem/qcom/sensor/imx519/imx519_sensor.cpp"
 DST_PLUGIN=assets/camera/com.qti.sensor.imx519.so
-SRC_PLUGIN_SHA256=124ec7e85ec82a6d90779ab1de5a1ea725c38f7373ca5af19eedc74e2b0dd824
-PLUGIN_TEXT_SHA256=97ffea788e76af547fd024aa28508bf6c48b41a780902bfadc97127322e6c005
-# The exact bytes this script is known to produce. patchelf 0.18.0 rewrites
-# .dynamic in place, so the output is reproducible; a mismatch means either a
-# different patchelf or a different input, and both deserve a look before the
-# result ships.
-DST_PLUGIN_SHA256=c2a77eda3837d08150155c1f7bc88fae6616904620682af5498dd28c304ce5a4
 SRC_TUNING=vendor/com.qti.tuned.sunny_imx519.bin
 SRC_TUNING_SHA256=56003d9d5323c57ff97946928646ca947176b107d80d4f4be4488ce8ed447737
-
-# Hex offsets come out of readelf; convert in the shell rather than with awk's
-# strtonum(), which is a gawk extension that mawk - equally likely to be
-# /usr/bin/awk on Ubuntu - does not implement.
-text_sha() {
-    off=$(readelf -SW "$1" | awk '$2==".text"{print $5}')
-    sz=$(readelf -SW "$1" | awk '$2==".text"{print $6}')
-    [ -n "$off" ] && [ -n "$sz" ] || { echo "$1: no .text section" >&2; return 1; }
-    dd if="$1" bs=1 skip=$((0x$off)) count=$((0x$sz)) status=none | sha256sum | cut -d' ' -f1
-}
-
-command -v patchelf >/dev/null || { echo "patchelf not installed" >&2; exit 1; }
 
 check_sha() {
     have=$(sha256sum "$1" | cut -d' ' -f1)
@@ -211,33 +190,36 @@ check_sha() {
     echo "  have $have" >&2
     return 1
 }
-check_sha "$SRC_PLUGIN" "$SRC_PLUGIN_SHA256" || exit 1
 check_sha "$SRC_TUNING" "$SRC_TUNING_SHA256" || exit 1
+[ -f "$SRC_PLUGIN" ] || { echo "sensor plugin source not found: $SRC_PLUGIN" >&2; exit 1; }
 
-cp "$SRC_PLUGIN" "$WORK/plugin.so"
-patchelf --remove-needed libsync.so.0 "$WORK/plugin.so"
+CC=${CC:-aarch64-linux-gnu-gcc}
+command -v "$CC" >/dev/null || { echo "$CC not found" >&2; exit 1; }
+PLUGIN_CFLAGS="-x c++ -D_LINUX -DLE_CAMERA -O2 -fPIC -fno-exceptions -fno-rtti
+    -I$CHICDK/api/sensor -I$CHICDK/api/common -I$CHICDK/api/utils"
 
-# patchelf rewrites .dynamic in place; the code must come through untouched.
-# Comparing .text rather than the whole file keeps this check independent of
-# the patchelf version, which is free to lay out the rest differently.
-got=$(text_sha "$WORK/plugin.so")
-[ "$got" = "$PLUGIN_TEXT_SHA256" ] || {
-    echo "patchelf altered .text - refusing to ship" >&2
-    echo "  want $PLUGIN_TEXT_SHA256" >&2
-    echo "  have $got" >&2
-    exit 1
-}
-readelf -dW "$WORK/plugin.so" | grep -q libsync && { echo "libsync still present" >&2; exit 1; }
-readelf -sW --dyn-syms "$WORK/plugin.so" | grep -q GetSensorLibraryAPIs \
-    || { echo "GetSensorLibraryAPIs lost" >&2; exit 1; }
-check_sha "$WORK/plugin.so" "$DST_PLUGIN_SHA256" || {
-    echo "  (patchelf $(patchelf --version 2>&1 | awk '{print $2}') produced different bytes;" >&2
-    echo "   the semantic checks above still passed, so update DST_PLUGIN_SHA256" >&2
-    echo "   deliberately if this is an intended toolchain change)" >&2
-    exit 1
-}
-install -m 644 "$WORK/plugin.so" "$DST_PLUGIN"
-echo "== sensor plugin: libsync stripped, .text unchanged, output hash pinned =="
+# Offsets as read by the CamX on the device (traced from the register writes).
+# A chi-cdk tree with another layout fails here instead of on the sensor.
+cat > "$WORK/abi.cpp" <<'EOF'
+#include <stddef.h>
+#include "camxsensordriverapi.h"
+static_assert(offsetof(SensorExposureRegInfo, frameLengthLinesAddr)  == 816, "FLL");
+static_assert(offsetof(SensorExposureRegInfo, coarseIntgTimeAddr)    == 824, "exposure");
+static_assert(offsetof(SensorExposureRegInfo, globalAnalogGainAddr)  == 832, "analog gain");
+static_assert(offsetof(SensorExposureRegInfo, GlobalDigitalGainAddr) == 840, "digital gain");
+EOF
+# shellcheck disable=SC2086
+"$CC" $PLUGIN_CFLAGS -fsyntax-only "$WORK/abi.cpp" \
+    || { echo "chi-cdk headers do not match the CamX on the device" >&2; exit 1; }
+
+# The soname matches the name CamX searches for: /usr/lib/camera/*.sensor.imx519.so.0
+# shellcheck disable=SC2086
+"$CC" $PLUGIN_CFLAGS -shared -s -Wl,-soname,com.qti.sensor.imx519.so.0 \
+    -Wl,-z,relro,-z,now -o "$DST_PLUGIN" "$SRC_PLUGIN"
+chmod 644 "$DST_PLUGIN"
+readelf -sW --dyn-syms "$DST_PLUGIN" | grep -q GetSensorLibraryAPIs \
+    || { echo "GetSensorLibraryAPIs not exported" >&2; exit 1; }
+echo "== sensor plugin built from $(basename "$SRC_PLUGIN") =="
 
 # Tuning data needs no edit, but keep it flowing through vendor/ too so every
 # shipped asset has one recorded upstream.
@@ -249,8 +231,6 @@ install -m 644 "$SRC_TUNING" assets/camera/
 # camx-v4l2-bridge is the daemon that feeds a v4l2loopback node. All three
 # share camx-hal.h, so building them together is what keeps that ABI honest -
 # leaving the bridge out of this loop is how it drifted and regressed once.
-CC=${CC:-aarch64-linux-gnu-gcc}
-command -v "$CC" >/dev/null || { echo "$CC not found" >&2; exit 1; }
 install -d -m 755 assets/tools
 for t in camx-enum camx-capture camx-v4l2-bridge; do
     "$CC" -O2 -Wall -Wextra -o "assets/tools/$t" "src/$t.c" -ldl -lpthread
