@@ -12,13 +12,6 @@ configure)
     ldconfig
     rm -rf /var/cache/camera/*.bin /var/cache/camera/camxcache* 2>/dev/null || true
 
-    # Widen the AE dead zone in the vendor tuning, or video flickers; the
-    # script explains why and no-ops unless the file is the one it expects.
-    if [ -x /usr/libexec/tachyon-camera-tuning-patch ]; then
-        /usr/libexec/tachyon-camera-tuning-patch || \
-            echo "tuning patch failed; camera still works, video may flicker" >&2
-    fi
-
     # Enable on first install only - "$2" carries the previous version and is
     # empty for a fresh one. deb-systemd-helper edits the target root without
     # requiring a running PID 1, which matters when Composer installs this

@@ -148,7 +148,6 @@ install -m 755 src/tachyon-camera-bridge-start "$STAGE/usr/libexec/tachyon-camer
 # A plain udev change updates properties but does not make an already-running
 # WirePlumber reconsider a V4L node rejected while it was OUTPUT-only.
 install -m 755 src/tachyon-camera-notify-ready "$STAGE/usr/libexec/tachyon-camera-notify-ready"
-install -m 755 src/tachyon-camera-tuning-patch "$STAGE/usr/libexec/tachyon-camera-tuning-patch"
 install -d -m 755 "$STAGE/lib/systemd/system"
 install -m 644 src/tachyon-camera-bridge.service "$STAGE/lib/systemd/system/tachyon-camera-bridge.service"
 # Restarts the bridge cleanly across suspend.
