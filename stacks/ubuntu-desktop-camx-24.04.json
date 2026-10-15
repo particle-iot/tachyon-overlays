@@ -15,9 +15,9 @@
       //    default would take the RAW camss path away from every image.
       //    (The two CamX overlays, CSI1 and CSI2, do coexist - that is how the
       //    dual-camera configuration works.)
-      // 2. This is EXPERIMENTAL and delivers HAL3 only. Ordinary V4L2 clients
-      //    (Cheese, ffmpeg, OpenCV) cannot use it without a bridge that is not
-      //    part of this stack.
+      // 2. This is EXPERIMENTAL. Ordinary V4L2 clients (Snapshot, Cheese,
+      //    ffmpeg, OpenCV) reach it through camx-v4l2-bridge, which the
+      //    add-camera-camx package installs and enables.
       // 3. Both profiles are pinned to 4-lane. A 2-lane module needs a
       //    different bin and is not supported: CamX matches on chip ID, which
       //    every IMX519 variant reports identically, so the wrong lane count
@@ -29,6 +29,13 @@
       {
         "type": "overlay",
         "name": "add-camera-camx"
+      },
+      // Without it the desktop camera app crashes on the shutter. It pins the
+      // exact gstreamer1.0-pipewire version, so it runs after add-camera-camx
+      // has left the archive in its final state (same order as custom-rootfs).
+      {
+        "type": "overlay",
+        "name": "add-camera-pipewire-fix"
       }
     ]
 }

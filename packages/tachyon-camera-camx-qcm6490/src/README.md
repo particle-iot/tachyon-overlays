@@ -78,6 +78,10 @@ The two CamX overlays here are fine together; it is the camss ones that clash.
 | `…-csi1-4lane.dtbo` | CSI1 | 0 | 3 | cci1 master 0 |
 | `…-csi2-4lane.dtbo` | CSI2 (shared with DSI) | 1 | 1 | cci0 master 1 |
 
+The HAL numbers only the cameras that probed, in cameraId order, so a lone
+CSI2 camera is camera 0 and needs no `CAMERA_ID` change; with both connectors
+CSI1 is 0 and CSI2 is 1.
+
 Both expect a **4-lane IMX519 with an AK7375 VCM** — that is the only
 combination validated so far. A 2-lane module fails in a particularly unhelpful
 way: probe, acquire and start all report success, and only StreamOn comes up
