@@ -1,5 +1,5 @@
 Package: tachyon-camera-camx-qcm6490
-Version: 0.1~exp7
+Version: 0.1~exp8
 Architecture: arm64
 Maintainer: Tachyon Platform <eugene@particle.io>
 Section: misc

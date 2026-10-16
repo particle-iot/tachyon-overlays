@@ -14,8 +14,8 @@
     },
     {
       "type": "copy-into-chroot",
-      "source": "files/tachyon-camera-camx-qcm6490_0.1~exp7_arm64.deb",
-      "destination": "/tmp/tachyon-camera-debs/tachyon-camera-camx-qcm6490_0.1~exp7_arm64.deb",
+      "source": "files/tachyon-camera-camx-qcm6490_0.1~exp8_arm64.deb",
+      "destination": "/tmp/tachyon-camera-debs/tachyon-camera-camx-qcm6490_0.1~exp8_arm64.deb",
       "permissions": "644"
     },
     {
