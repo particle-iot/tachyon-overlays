@@ -1,1 +1,0 @@
-SUBSYSTEM=="typec", KERNEL=="port0", ACTION=="change", TAG+="systemd", ENV{SYSTEMD_WANTS}+="adbd-role-switch.service"
