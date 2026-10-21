@@ -29,13 +29,6 @@
       {
         "type": "overlay",
         "name": "add-camera-camx"
-      },
-      // Without it the desktop camera app crashes on the shutter. It pins the
-      // exact gstreamer1.0-pipewire version, so it runs after add-camera-camx
-      // has left the archive in its final state (same order as custom-rootfs).
-      {
-        "type": "overlay",
-        "name": "add-camera-pipewire-fix"
       }
     ]
 }

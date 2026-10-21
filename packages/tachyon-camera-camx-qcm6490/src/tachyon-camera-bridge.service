@@ -6,6 +6,10 @@ Documentation=file:/usr/share/doc/tachyon-camera-camx-qcm6490/README.md
 After=local-fs.target systemd-udev-settle.service
 Wants=systemd-udev-settle.service
 
+# Only boards with a CamX camera overlay have this node; elsewhere the unit is
+# skipped and does not delay the login screen.
+ConditionPathExists=/proc/device-tree/soc@0/qcom,cam-req-mgr
+
 # camx-v4l2-bridge publishes through v4l2loopback with exclusive_caps=1. Until
 # its first frame arrives the node advertises OUTPUT, not CAPTURE; a desktop
 # session started in that window lets WirePlumber classify it as "not a
@@ -47,6 +51,10 @@ ExecStartPost=-/usr/libexec/tachyon-camera-notify-ready
 # once a second camera or a long-running session is involved.
 LimitNOFILE=4096
 
+# CamX stays talkative even with its own logging off; limit this unit only.
+LogRateLimitIntervalSec=10s
+LogRateLimitBurst=300
+
 # SIGTERM must be what stops this. A SIGKILL leaves v4l2loopback stuck in its
 # capture state and the next start fails until the module is reloaded, so give
 # the bridge room to finish its teardown - it exits in about a second.
@@ -65,6 +73,8 @@ TimeoutStopSec=30
 # recovers on its own; stopping should be immediate.
 Restart=on-failure
 RestartSec=15
+# Not on 3, "no camera to stream" (see EXIT_NO_CAMERA in camx-v4l2-bridge.c).
+RestartPreventExitStatus=3
 
 [Install]
 WantedBy=multi-user.target

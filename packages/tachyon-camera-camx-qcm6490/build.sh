@@ -165,12 +165,6 @@ install -m 644 src/60-tachyon-camera.rules "$STAGE/lib/udev/rules.d/60-tachyon-c
 install -d -m 755 "$STAGE/var/cache/camera"
 install -m 644 src/camxoverridesettings.txt "$STAGE/var/cache/camera/camxoverridesettings.txt"
 
-# Bounds what the camera's log volume costs in flash. Conffile for the same
-# reason.
-install -d -m 755 "$STAGE/etc/systemd/journald.conf.d"
-install -m 644 src/90-tachyon-camera-journald.conf \
-    "$STAGE/etc/systemd/journald.conf.d/90-tachyon-camera-journald.conf"
-
 # Hardware-encoded recording, for when Snapshot's software VP8 is too soft.
 install -m 755 src/tachyon-camera-record "$STAGE/usr/bin/tachyon-camera-record"
 

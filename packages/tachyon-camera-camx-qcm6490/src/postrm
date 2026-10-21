@@ -11,6 +11,9 @@
 # to come off, or the camera stack is left with no sensor map at all.
 set -e
 
+# Remove the system-wide journald drop-in shipped up to 0.1~exp8.
+dpkg-maintscript-helper rm_conffile /etc/systemd/journald.conf.d/90-tachyon-camera-journald.conf 0.1~exp9~ -- "$@"
+
 SOCID=/usr/lib/qcm6490/camera/com.qti.sensorsocmap.socid_map.bin
 PKG=tachyon-camera-camx-qcm6490
 

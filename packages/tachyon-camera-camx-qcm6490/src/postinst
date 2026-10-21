@@ -7,6 +7,9 @@
 # freshly installed module invisible to enumeration.
 set -e
 
+# Remove the system-wide journald drop-in shipped up to 0.1~exp8.
+dpkg-maintscript-helper rm_conffile /etc/systemd/journald.conf.d/90-tachyon-camera-journald.conf 0.1~exp9~ -- "$@"
+
 case "$1" in
 configure)
     ldconfig
@@ -35,6 +38,12 @@ configure)
     # have no system manager; the enable state above is still fully written.
     if [ -d /run/systemd/system ]; then
         systemctl daemon-reload 2>/dev/null || true
+
+        # journald reads its configuration only at startup; after removing the
+        # old drop-in, restart it so the defaults apply now, not after a reboot.
+        if [ -n "$2" ] && dpkg --compare-versions "$2" lt 0.1~exp9~; then
+            systemctl restart systemd-journald 2>/dev/null || true
+        fi
     fi
     if command -v udevadm >/dev/null 2>&1; then
         udevadm control --reload-rules 2>/dev/null || true

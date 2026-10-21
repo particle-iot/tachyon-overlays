@@ -93,6 +93,13 @@ static const char *g_fourcc_name = "NV12";
 #define AE_ANTIBANDING_60HZ       2
 #define AE_ANTIBANDING_AUTO       3
 
+/*
+ * No camera to stream: the HAL enumerated none, or fewer than --camera asks
+ * for. CamX enumerates only at startup, so a restart cannot change it; the
+ * unit's RestartPreventExitStatus= keeps systemd from retrying.
+ */
+#define EXIT_NO_CAMERA 3
+
 /* TACHYON_AF_DEBUG=1 logs each AF state change. */
 #define TAG_AF_STATE              0x00010020  /* ANDROID_CONTROL_AF_STATE */
 
@@ -333,10 +340,11 @@ int main(int argc, char **argv)
 		fprintf(stderr, "bad HMI\n"); goto out;
 	}
 	int ncam = mod->get_number_of_cameras();
-	if (ncam <= 0) { fprintf(stderr, "no cameras\n"); goto out; }
+	if (ncam <= 0) { fprintf(stderr, "no cameras\n"); rc_exit = EXIT_NO_CAMERA; goto out; }
 	if (cam_index >= ncam) {
 		fprintf(stderr, "--camera %d but only %d present"
 			" (is the matching overlay enabled?)\n", cam_index, ncam);
+		rc_exit = EXIT_NO_CAMERA;
 		goto out;
 	}
 	printf("cameras: %d, using %d\n", ncam, cam_index);

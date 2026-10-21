@@ -1,11 +1,16 @@
 /*
- * gst-tachyoncam - GStreamer tracer that retunes vp8enc for the desktop camera
- * apps (Snapshot, Cheese). They only record VP8 and expose no encoder
- * settings, and vp8enc's defaults (256 kbps, one thread) reach ~10 fps at
- * 1080p here; realtime mode on every core holds 30 fps at 6 Mbps.
+ * gst-tachyoncam - GStreamer tracer that fixes two things in the desktop camera
+ * apps (Snapshot, Cheese), neither of which they expose a setting for:
  *
- * Loaded through GST_TRACERS=tachyoncam (src/90-tachyon-camera.conf). The
- * shutter crash in the same apps is tachyon-gst-pipewire-camfix's, not this.
+ * - vp8enc: they only record VP8, and its defaults (256 kbps, one thread)
+ *   reach ~10 fps at 1080p here; realtime mode on every core holds 30 fps at
+ *   6 Mbps.
+ * - pipewiresrc: PipeWire 1.0.5 withdraws a buffer mapping while downstream
+ *   still reads it, so taking a photo or stopping a recording crashes in
+ *   gst_video_frame_copy. always-copy hands downstream a private copy, with no
+ *   change to the system's libgstpipewire.so.
+ *
+ * Loaded through GST_TRACERS=tachyoncam (src/90-tachyon-camera.conf).
  *
  * Like camx-hal.h it declares the small GStreamer 1.x ABI it uses instead of
  * needing arm64 headers in the cross build; the symbols resolve against the
@@ -74,6 +79,10 @@ static void on_element_new(void *tracer, GstClockTime ts, void *element)
 	char threads[16];
 
 	(void)tracer; (void)ts;
+	if (!strcmp(type, "GstPipeWireSrc")) {
+		set_prop(element, "always-copy", "true");
+		return;
+	}
 	if (strcmp(type, "GstVP8Enc"))
 		return;
 	snprintf(threads, sizeof(threads), "%ld", sysconf(_SC_NPROCESSORS_ONLN));
@@ -105,7 +114,7 @@ static gboolean plugin_init(void *plugin)
 
 /* 1.24 is the ABI checked above; GStreamer refuses a newer minor than its own. */
 static const GstPluginDesc desc = {
-	1, 24, "tachyoncam", "vp8enc tuning for Tachyon camera apps", plugin_init,
+	1, 24, "tachyoncam", "vp8enc and pipewiresrc tuning for Tachyon camera apps", plugin_init,
 	"1.0", "LGPL", "tachyon-camera-camx-qcm6490", "tachyon-camera-camx-qcm6490",
 	"https://www.particle.io", NULL, { NULL },
 };

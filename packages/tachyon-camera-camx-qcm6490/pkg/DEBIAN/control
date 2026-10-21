@@ -1,25 +1,26 @@
 Package: tachyon-camera-camx-qcm6490
-Version: 0.1~exp8
+Version: 0.1~exp9
 Architecture: arm64
 Maintainer: Tachyon Platform <eugene@particle.io>
 Section: misc
 Priority: optional
-Depends: qcom-camx-qcm6490 (= 1.0.6+repack2),
-         qcom-camxlib-qcm6490 (= 1.0.6+repack2),
-         qcom-chicdk-qcm6490 (= 1.0.6+repack2),
-         qcom-fastrpc1 (= 1.0.15+repack2),
-         qcom-libdmabufheap (= 1.1.0+250131+rel1.0+nmu1),
-         qcom-libqmi-framework (= 1.0.1+repack2),
-         qcom-sensing-hub (= 1.0.2-0ubuntu1),
-         qcom-sensors-core (= 1.0.0+250130+rel1.2+testapps-0ubuntu4),
-         qcom-sensors-utils (= 1.0.0+250130+rel1.2+testapps-0ubuntu4),
-         qcom-sensors-lookup (= 1.0.0+250130+rel1.2+testapps-0ubuntu4),
-         qcom-adreno-cl1 (= 1.855.3+rev2+repack1),
-         qcom-property-vault (= 1.1.0-0ubuntu1),
+Depends: qcom-camx-qcm6490 (>= 1.0.6+repack2), qcom-camx-qcm6490 (<< 1.0.7~),
+         qcom-camxlib-qcm6490 (>= 1.0.6+repack2), qcom-camxlib-qcm6490 (<< 1.0.7~),
+         qcom-chicdk-qcm6490 (>= 1.0.6+repack2), qcom-chicdk-qcm6490 (<< 1.0.7~),
+         qcom-fastrpc1 (>= 1.0.15+repack2),
+         qcom-libdmabufheap (>= 1.1.0+250131+rel1.0+nmu1),
+         qcom-libqmi-framework (>= 1.0.1+repack2),
+         qcom-sensing-hub (>= 1.0.2-0ubuntu1),
+         qcom-sensors-core (>= 1.0.0+250130+rel1.2+testapps-0ubuntu4),
+         qcom-sensors-utils (>= 1.0.0+250130+rel1.2+testapps-0ubuntu4),
+         qcom-sensors-lookup (>= 1.0.0+250130+rel1.2+testapps-0ubuntu4),
+         qcom-adreno-cl1 (>= 1.855.3+rev2+repack1),
+         qcom-property-vault (>= 1.1.0-0ubuntu1),
          tachyon-firmware-dragonwing-compat,
          v4l-utils,
          v4l2loopback-dkms | v4l2loopback-modules
 Conflicts: camx-kt, chicdk-kt, camxlib-kt
+Breaks: tachyon-gst-pipewire-camfix
 Description: CamX hardware-ISP camera integration for Tachyon (QCM6490, experimental)
  Wires up the vendor CamX stack so the IMX519 runs through the hardware ISP
  (CSIPHY -> CSID -> IFE -> IPE) instead of the RAW-only upstream camss path.

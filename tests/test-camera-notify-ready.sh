@@ -83,6 +83,16 @@ V4L2_RESULT=1 TMPDIR="$TMP" PATH="$TMP/bin:$PATH" DEVICE=/dev/null READY_TIMEOUT
 [[ ! -s "$UDEV_LOG" ]]
 grep -Fq 'allowing desktop startup without a camera' "$TMP/timeout.stderr"
 
+# A bridge that has already exited can never produce a frame, so the helper
+# must stop waiting at once rather than hold graphical boot for the timeout.
+: >"$UDEV_LOG"
+start=$SECONDS
+V4L2_RESULT=1 MAINPID=999999 TMPDIR="$TMP" PATH="$TMP/bin:$PATH" DEVICE=/dev/null \
+    READY_TIMEOUT_SEC=30 bash "$HELPER" >"$TMP/dead.stdout" 2>"$TMP/dead.stderr"
+(( SECONDS - start < 5 ))
+[[ ! -s "$UDEV_LOG" ]]
+grep -Fq 'camera bridge exited before producing a frame' "$TMP/dead.stderr"
+
 # Cold boot also depends on correcting the udev database value captured during
 # v4l2loopback's original OUTPUT-only add event. Keep that card-label-scoped
 # override from disappearing in a later cleanup.

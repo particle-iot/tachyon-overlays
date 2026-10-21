@@ -66,6 +66,15 @@ echo "### PPA"
 # retry that ends the whole image build over a transient mirror hiccup.
 APT_OPTS="-o Acquire::Retries=3"
 
+# The PPA also rebuilds 31 Ubuntu packages (GStreamer among them) with versions
+# that sort above Ubuntu's. Priority 100 keeps it to what only it provides, so
+# apt upgrade does not replace them and Ubuntu's security updates still apply.
+cat > /etc/apt/preferences.d/tachyon-qcom-ppa <<'EOF'
+Package: *
+Pin: release o=LP-PPA-ubuntu-qcom-iot-qcom-ppa
+Pin-Priority: 100
+EOF
+
 if ! grep -rqs "ubuntu-qcom-iot" /etc/apt/sources.list.d/; then
     apt-get install -y $APT_OPTS --no-install-recommends software-properties-common
     add-apt-repository -y ppa:ubuntu-qcom-iot/qcom-ppa
@@ -76,7 +85,8 @@ echo "### firmware compat provider (must precede the CamX stack)"
 apt-get install -y $APT_OPTS "$DEBDIR"/tachyon-firmware-dragonwing-compat_*_all.deb
 
 echo "### CamX integration"
-# Pulls in the pinned qcom-camx / chicdk / camxlib / fastrpc closure via Depends.
+# Pulls in the qcom-camx / chicdk / camxlib / fastrpc closure via Depends, as
+# minimum versions: the PPA keeps only its newest build.
 #
 # Simulate first, and refuse if the plan contains another kernel.
 # v4l2loopback-modules is a virtual package that every Ubuntu linux-modules-*
@@ -126,6 +136,12 @@ for so in /usr/lib/qcm6490/hw/camera.qcom.so \
     esac
 done
 dpkg-divert --list | grep -q socid_map || die "socid_map diversion missing"
+
+# Qualcomm's rebuilds carry "-qc<N>" in the version; one here means the pin did
+# not hold. Names containing "qcom" are Qualcomm's own plugins, not rebuilds.
+qc=$(dpkg-query -W -f '${Package} ${Version}\n' 'gstreamer1.0-*' 'libgstreamer*' 'gir1.2-gst*' 2>/dev/null \
+     | awk '$2 ~ /-qc[0-9]/ && $1 !~ /qcom/') || true
+[ -z "$qc" ] || { echo "$qc" >&2; die "Qualcomm GStreamer rebuilds replaced Ubuntu's"; }
 
 # A package postinst that gates `systemctl enable` on /run/systemd/system works
 # on a live board but silently leaves Composer images disabled: image chroots
