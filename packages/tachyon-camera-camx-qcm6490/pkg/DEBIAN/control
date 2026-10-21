@@ -1,0 +1,72 @@
+Package: tachyon-camera-camx-qcm6490
+Version: 0.1~exp9
+Architecture: arm64
+Maintainer: Tachyon Platform <eugene@particle.io>
+Section: misc
+Priority: optional
+Depends: qcom-camx-qcm6490 (>= 1.0.6+repack2), qcom-camx-qcm6490 (<< 1.0.7~),
+         qcom-camxlib-qcm6490 (>= 1.0.6+repack2), qcom-camxlib-qcm6490 (<< 1.0.7~),
+         qcom-chicdk-qcm6490 (>= 1.0.6+repack2), qcom-chicdk-qcm6490 (<< 1.0.7~),
+         qcom-fastrpc1 (>= 1.0.15+repack2),
+         qcom-libdmabufheap (>= 1.1.0+250131+rel1.0+nmu1),
+         qcom-libqmi-framework (>= 1.0.1+repack2),
+         qcom-sensing-hub (>= 1.0.2-0ubuntu1),
+         qcom-sensors-core (>= 1.0.0+250130+rel1.2+testapps-0ubuntu4),
+         qcom-sensors-utils (>= 1.0.0+250130+rel1.2+testapps-0ubuntu4),
+         qcom-sensors-lookup (>= 1.0.0+250130+rel1.2+testapps-0ubuntu4),
+         qcom-adreno-cl1 (>= 1.855.3+rev2+repack1),
+         qcom-property-vault (>= 1.1.0-0ubuntu1),
+         tachyon-firmware-dragonwing-compat,
+         v4l-utils,
+         v4l2loopback-dkms | v4l2loopback-modules
+Conflicts: camx-kt, chicdk-kt, camxlib-kt
+Breaks: tachyon-gst-pipewire-camfix
+Description: CamX hardware-ISP camera integration for Tachyon (QCM6490, experimental)
+ Wires up the vendor CamX stack so the IMX519 runs through the hardware ISP
+ (CSIPHY -> CSID -> IFE -> IPE) instead of the RAW-only upstream camss path.
+ AE, AWB, AF and lens shading all work; the kernel needs no changes, as the
+ Qualcomm camera KMD already ships in the Canonical-maintained tree.
+ .
+ Covers both camera connectors. CSI1 and CSI2 each get their own overlay and
+ sensor profile, and the two may be enabled together for dual-camera use.
+ Note that CSI2 shares its connector with DSI, so using it costs the panel.
+ .
+ Contents:
+   * per-SoC layout - /usr/lib/hw, /usr/lib/camera and 153 /usr/lib/*.so*
+     links into /usr/lib/qcm6490, shipped as package payload so dpkg owns them
+   * sensor description binaries for the CSI1 and CSI2 4-lane profiles
+   * both DT overlays, staged under /usr/share/tachyon/dtbo. The package never
+     touches /boot/dtb_a - deploying an overlay stays a user decision
+   * camx-enum / camx-capture as smoke-test clients
+ .
+ The stock com.qti.sensorsocmap.socid_map.bin from qcom-chicdk-qcm6490 is taken
+ over with dpkg-divert, so a later chicdk upgrade cannot silently restore it and
+ drop the IMX519 from enumeration.
+ .
+ Ordinary V4L2 clients are served through camx-v4l2-bridge, which holds the
+ HAL3 camera open and republishes frames on a v4l2loopback node. That is what
+ the v4l2loopback dependency is for. It is an alternative because the module
+ can arrive two ways: compiled locally by v4l2loopback-dkms, or built into the
+ kernel package, which needs arch=arm64 in its dkms-versions entry. Declaring
+ it turns a missing module from a service that fails at runtime into an
+ install that refuses up front.
+ .
+ The bridge service is enabled on first install so desktop camera applications
+ work after the first boot. Because CamX permits only one HAL3 client at a
+ time, stop tachyon-camera-bridge.service before using camx-capture or another
+ native HAL3 client directly.
+ .
+ The order matters and is not the obvious one. v4l2loopback-modules is a
+ virtual package that every Ubuntu linux-modules-* provides, so naming it
+ first lets apt satisfy the dependency by pulling in an unrelated kernel -
+ observed here as a 208 MB linux-modules-6.8.0-1046-nvidia-lowlatency-64k
+ arriving alongside the camera stack. The real package goes first; the virtual
+ one is only a fallback for an image whose own kernel already carries it.
+ .
+ EXPERIMENTAL. The tuning data is calibrated for a Sunny IMX519 on SM8250 and
+ lacks several blocks the HAL looks for - tmc13_sw and AANR_ATF among them -
+ so noise reduction and tone mapping are skipped and images are softer than
+ the sensor can manage. Tuning built for the module on this board is the fix.
+ The auto-exposure hunting reported earlier was a different problem: the module
+ fitted at the time did not match this tuning at all, and it went away once the
+ right one was installed.

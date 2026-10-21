@@ -1,0 +1,80 @@
+[Unit]
+Description=Tachyon CamX to V4L2 bridge
+Documentation=file:/usr/share/doc/tachyon-camera-camx-qcm6490/README.md
+# The bridge dlopen()s the CamX HAL, which needs the camera kernel driver and
+# the vendor firmware mounts to be in place.
+After=local-fs.target systemd-udev-settle.service
+Wants=systemd-udev-settle.service
+
+# Only boards with a CamX camera overlay have this node; elsewhere the unit is
+# skipped and does not delay the login screen.
+ConditionPathExists=/proc/device-tree/soc@0/qcom,cam-req-mgr
+
+# camx-v4l2-bridge publishes through v4l2loopback with exclusive_caps=1. Until
+# its first frame arrives the node advertises OUTPUT, not CAPTURE; a desktop
+# session started in that window lets WirePlumber classify it as "not a
+# camera" for the lifetime of that session. ExecStartPost below performs a
+# bounded real-frame probe, so order the display manager after the whole unit
+# (including ExecStartPost), not merely after the bridge process was forked.
+# The package udev rule also records this known bridge endpoint as CAPTURE;
+# otherwise udev retains :video_output: from the module's much earlier add
+# event even though the kernel has switched the live node to Video Capture.
+# This orders only normal graphical boots; it does not pull a display manager
+# into headless images.
+Before=display-manager.service
+
+# A restart loop is the expected outcome when the camera overlay is not
+# deployed or the module is missing, so bound it instead of hammering the HAL.
+# These two belong in [Unit], not [Service] - systemd silently ignores them
+# in [Service] and the limit never applies.
+#
+# The window has to outlast the retry spacing below, or the limit trips while
+# the retries are still legitimately waiting for CamX to let go.
+StartLimitIntervalSec=300
+StartLimitBurst=6
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/tachyon-camera-bridge
+
+ExecStart=/usr/libexec/tachyon-camera-bridge-start
+
+# This is intentionally synchronous. A successful G_FMT is too weak: only
+# dequeuing a frame proves that the node has completed its OUTPUT -> CAPTURE
+# transition. The helper then emits remove/add instead of change, because an
+# already-running WirePlumber does not reconsider a V4L device it rejected at
+# initial enumeration. Its 60-second default timeout always returns success so
+# a missing camera is reported in the journal without blocking graphical boot.
+ExecStartPost=-/usr/libexec/tachyon-camera-notify-ready
+
+# CamX opens a lot of descriptors per pipeline; the default 1024 is not enough
+# once a second camera or a long-running session is involved.
+LimitNOFILE=4096
+
+# CamX stays talkative even with its own logging off; limit this unit only.
+LogRateLimitIntervalSec=10s
+LogRateLimitBurst=300
+
+# SIGTERM must be what stops this. A SIGKILL leaves v4l2loopback stuck in its
+# capture state and the next start fails until the module is reloaded, so give
+# the bridge room to finish its teardown - it exits in about a second.
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# CamX releases its CDSP/fastrpc session asynchronously, so an open() issued
+# immediately after the previous instance exits can fail. Measured on this
+# board: the camera is usable again 5 s after SIGTERM. `systemctl restart`
+# re-opens in well under a second, so its first attempt may still lose the
+# race - that is what the retry below is for.
+#
+# Deliberately NOT solved by delaying the stop: a cooldown there would make
+# `systemctl stop` and `dpkg remove` block for the same duration, punishing
+# the common case to smooth over a rare one. Restarting is infrequent and
+# recovers on its own; stopping should be immediate.
+Restart=on-failure
+RestartSec=15
+# Not on 3, "no camera to stream" (see EXIT_NO_CAMERA in camx-v4l2-bridge.c).
+RestartPreventExitStatus=3
+
+[Install]
+WantedBy=multi-user.target

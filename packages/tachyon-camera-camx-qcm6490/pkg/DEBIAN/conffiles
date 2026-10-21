@@ -1,0 +1,3 @@
+/etc/default/tachyon-camera-bridge
+/etc/modprobe.d/tachyon-v4l2loopback.conf
+/var/cache/camera/camxoverridesettings.txt

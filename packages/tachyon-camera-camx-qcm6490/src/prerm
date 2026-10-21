@@ -1,0 +1,20 @@
+#!/bin/sh
+# Stop the bridge before its binary goes away.
+#
+# Without this, dpkg removes /usr/bin/camx-v4l2-bridge from under a running
+# service, which then respawns into a restart loop against a missing file.
+#
+# This returns as soon as the bridge exits (about a second). CamX needs a few
+# more seconds before the camera can be opened again, but nothing in the
+# removal path opens it, so there is no reason to block here.
+set -e
+
+case "$1" in
+remove|deconfigure)
+    if [ -d /run/systemd/system ]; then
+        systemctl stop tachyon-camera-bridge.service 2>/dev/null || true
+    fi
+    ;;
+esac
+
+exit 0

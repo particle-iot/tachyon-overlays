@@ -1,0 +1,170 @@
+// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Vendor camera (CamX KMD) overlay for Tachyon with the IMX519 on CSI1.
+ *
+ * Base blocks come from the CLO reference dtsi; the sensor node below is the
+ * vendor-binding equivalent of the upstream qcom_camss IMX519 overlay, reusing
+ * the wiring already proven on this board:
+ *
+ *   CSIPHY3, 4-lane D-PHY, CCI1 master 0, slave 0x1a, MCLK3 @ 24 MHz,
+ *   reset on tlmm 141, VANA 2.8 V / VDIG 1.05 V / VIO 1.8 V.
+ *
+ * The AK7375 VCM at 0x0c is wired and driven, so an actuator node is present.
+ * No EEPROM or flash node: this module carries neither.
+ *
+ * gpios-shared uses the Linux global GPIO number (547 + tlmm offset). That base
+ * is assigned dynamically, so it is an implicit kernel ABI - re-check it after
+ * any kernel bump.
+ *
+ * This overlay may be combined with the CSI2 one for dual-camera operation.
+ * The two share the camera base blocks; identical content merges idempotently,
+ * so the only thing that must agree between them is gpios-shared - it lists
+ * BOTH sensors' power-enable pins in both files, because a differing value
+ * would be silently overwritten by whichever overlay is applied last.
+ *
+ * Exclusive with the UPSTREAM CAMSS overlays, not with the other CamX one:
+ * camss and CamX claim the same CSIPHY/CSID/VFE ranges, so overlays.txt must
+ * never list a camss camera overlay alongside either of these. Listing the
+ * CSI1 and CSI2 CamX overlays together is supported and is how dual-camera
+ * operation is configured.
+ */
+
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/clock/qcom,gcc-sc7280.h>
+#include <dt-bindings/clock/qcom,camcc-sc7280.h>
+#include <dt-bindings/interconnect/qcom,sc7280.h>
+#include <dt-bindings/interrupt-controller/arm-gic.h>
+#include <dt-bindings/power/qcom-rpmpd.h>
+
+#include "qcm6490-camera.dtsi"
+
+/*
+ * The camera resource manager arbitrates GPIOs shared between sensors. It
+ * lives in the vendor sensor dtsi, not in the camera base dtsi, so including
+ * only the base leaves cam_res_mgr's global state NULL - and every sensor
+ * power-up goes through cam_res_mgr_gpio_request(), which then dereferences
+ * it. Without this node, probing the sensor oopses in mutex_lock().
+ *
+ * No shared pinctrl here: that part of the reference design is for GMSL
+ * deserializers, which this board does not have.
+ */
+&soc {
+    qcom,cam-res-mgr {
+        compatible = "qcom,cam-res-mgr";
+        /* Each sensor's power enable is driven by both its sensor and its
+         * actuator node. Listing them here makes cam_res_mgr reference-count
+         * them, so an actuator powering down does not cut power to a sensor
+         * that is still streaming.
+         *
+         * Both CSI1 and CSI2 pins are listed here and in the CSI2 overlay.
+         * Identical values are what lets the two merge idempotently when both
+         * are enabled; a differing value would be silently overwritten by
+         * whichever overlay is applied last. A pin listed but unused only
+         * costs an extra refcount entry.
+         *
+         * Values are Linux global GPIO numbers, not tlmm offsets: cam_res_mgr
+         * compares against what of_get_named_gpio() returned, which on this
+         * kernel is 547 + offset (107 -> 654 CSI1, 12 -> 559 CSI2). */
+        gpios-shared = <654 559>;
+        status = "ok";
+    };
+};
+
+&cam_cci1 {
+    qcom,cam-sensor0 {
+        cell-index = <0>;
+        compatible = "qcom,cam-sensor";
+        csiphy-sd-index = <3>;
+        sensor-position-roll = <0>;
+        sensor-position-pitch = <0>;
+        sensor-position-yaw = <0>;
+
+        /* Rails are declared for the KMD's benefit: msm_camera_fill_vreg_params
+         * requires num_rgltr > 0 and CamX's power-up sequence walks
+         * VANA/VDIG/VIO. The module itself is self-powered, so these are
+         * effectively a contract with the driver rather than the supply
+         * that actually brings the sensor up. */
+        cam_vana-supply = <&cam_vana_2p8>;
+        cam_vdig-supply = <&cam_vdig_1p05>;
+        cam_vio-supply = <&cam_vddl_1p8>;
+        regulator-names = "cam_vana", "cam_vdig", "cam_vio";
+        rgltr-cntrl-support;
+        rgltr-min-voltage = <2800000 1050000 1800000>;
+        rgltr-max-voltage = <2800000 1050000 1800000>;
+        rgltr-load-current = <80000 105000 100000>;
+
+        power-domains = <&camcc CAM_CC_TITAN_TOP_GDSC>;
+
+        gpio-no-mux = <0>;
+        pinctrl-names = "cam_default", "cam_suspend";
+        pinctrl-0 = <&csi1_mclk_default &csi1_reset_default
+                 &csi1_power_en_default>;
+        pinctrl-1 = <&csi1_mclk_sleep &csi1_reset_sleep
+                 &csi1_power_en_sleep>;
+        /* Order must match the sensor XML power-up sequence, which is
+         * CUSTOM_GPIO1 -> VANA -> VDIG -> VIO -> MCLK -> RESET. The
+         * MCLK entry is kept even though the module runs off its own
+         * crystal: the sequence still steps through it, and a missing
+         * cam_clk aborts the whole power-up before any regulator is
+         * enabled. */
+        gpios = <&tlmm 67 0>,
+            <&tlmm 141 0>,
+            <&tlmm 107 0>;
+        gpio-reset = <1>;
+        gpio-custom1 = <2>;
+        gpio-req-tbl-num = <0 1 2>;
+        gpio-req-tbl-flags = <1 0 0>;
+        gpio-req-tbl-label = "CAMIF_MCLK3",
+                     "CAM_RESET3",
+                     "CAM_CUSTOM1";
+
+        cci-master = <0>;
+        status = "ok";
+
+        /* Tells the KMD which actuator cell-index belongs to this sensor.
+         * Without it subdev_id[SUB_MODULE_ACTUATOR] keeps its default and
+         * CamX submits the actuator's init packet to device index 0, which
+         * is the IFE - the whole StreamOn then fails. */
+        actuator-src = <&imx519_actuator>;
+
+        clocks = <&camcc CAM_CC_MCLK3_CLK>;
+        clock-names = "cam_clk";
+        clock-cntl-level = "nominal";
+        clock-rates = <24000000>;
+    };
+
+    /*
+     * AK7375 voice coil motor at 7-bit 0x0c on the same CCI master as the
+     * sensor. The slave address is not declared here - it comes from the
+     * actuator entry in the sensormodule binary, same as the sensor's own
+     * address does. Rails mirror the sensor node: the module carries its
+     * own LDOs, so these exist to satisfy the driver's num_rgltr > 0 check.
+     */
+    imx519_actuator: qcom,actuator0 {
+        cell-index = <0>;
+        compatible = "qcom,actuator";
+        cci-master = <0>;
+
+        cam_vaf-supply = <&cam_vana_2p8>;
+        cam_vio-supply = <&cam_vddl_1p8>;
+        regulator-names = "cam_vaf", "cam_vio";
+        rgltr-cntrl-support;
+        rgltr-min-voltage = <2800000 1800000>;
+        rgltr-max-voltage = <2800000 1800000>;
+        rgltr-load-current = <100000 100000>;
+
+        /* The VCM sits behind the same module power enable as the sensor.
+         * CamX initialises the actuator before the sensor powers up, so
+         * without asserting it here the first I2C write is NACKed. */
+        gpio-no-mux = <0>;
+        gpios = <&tlmm 107 0>;
+        gpio-custom1 = <0>;
+        gpio-req-tbl-num = <0>;
+        gpio-req-tbl-flags = <0>;
+        gpio-req-tbl-label = "CAM_CUSTOM1";
+
+        status = "ok";
+    };
+};

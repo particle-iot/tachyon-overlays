@@ -1,0 +1,98 @@
+#!/bin/bash
+# Wait until the CamX bridge has produced a real frame, then re-enumerate its
+# v4l2loopback node for desktop camera consumers.
+#
+# Why this is necessary:
+#
+#   v4l2loopback is loaded with exclusive_caps=1. Before its producer starts,
+#   the node intentionally advertises OUTPUT only. After camx-v4l2-bridge has
+#   written a frame, the same node switches to CAPTURE only. This behaviour is
+#   useful because applications never mistake an empty loopback node for a
+#   camera, but it creates a discovery race at boot: udev and WirePlumber may
+#   inspect the OUTPUT-only state and permanently reject the node before CamX
+#   has finished its roughly 20-30 second cold start.
+#
+# A successful VIDIOC_G_FMT (v4l2-ctl --get-fmt-video) is NOT a readiness
+# check. The loopback node accepts that ioctl as soon as its format is set,
+# even when no capture frame can be dequeued. Probe by streaming one frame;
+# that verifies the exact operation Camera, Firefox and other PipeWire clients
+# need.
+#
+# A udev "change" event is also insufficient for an already-running desktop.
+# It refreshes ID_V4L_CAPABILITIES in udev, but WirePlumber does not turn a V4L
+# device it rejected during initial enumeration into a new Video/Source node.
+# A synthetic remove/add pair models a USB webcam reconnect: remove makes every
+# current WirePlumber instance discard its stale decision, and add makes it
+# enumerate the now CAPTURE-capable node from scratch. This is deliberately
+# preferred over restarting PipeWire, which would interrupt all audio/video
+# streams in every logged-in user session.
+#
+# The script is a synchronous ExecStartPost. Together with the unit's
+# Before=display-manager.service ordering and the package udev rule that records
+# this purpose-built endpoint's intended CAPTURE role, that closes the cold-boot
+# race. The wait is bounded and every failure path exits 0: a missing or faulty
+# optional camera must be visible in the journal, but must never prevent the
+# desktop from starting.
+set -u
+
+DEVICE=${DEVICE:-/dev/tachyon-camera}
+READY_TIMEOUT_SEC=${READY_TIMEOUT_SEC:-60}
+FRAME_PROBE_TIMEOUT=${FRAME_PROBE_TIMEOUT:-5s}
+REANNOUNCE_DELAY_SEC=${REANNOUNCE_DELAY_SEC:-0.25}
+# The bridge's PID (systemd passes it to ExecStartPost). Once it has exited no
+# frame can arrive, so stop waiting rather than hold the login screen.
+BRIDGE_PID=${MAINPID:-}
+
+# v4l2-ctl has an unfortunate failure mode on an OUTPUT-only v4l2loopback
+# node: it can print "unsupported stream type" yet still exit 0.  Therefore
+# the command's status is not proof that a capture buffer was dequeued.  Keep
+# the probe in /run (normally tmpfs) and require actual frame bytes before
+# announcing the node to desktop consumers.  TMPDIR remains overridable for
+# the offline regression test.
+probe_file=$(mktemp "${TMPDIR:-/run}/tachyon-camera-frame-probe.XXXXXX") || {
+    echo "cannot create camera frame probe file; allowing desktop startup without a camera" >&2
+    exit 0
+}
+trap 'rm -f -- "$probe_file"' EXIT
+
+deadline=$((SECONDS + READY_TIMEOUT_SEC))
+while (( SECONDS < deadline )); do
+    # --stream-count=1 is the important part: unlike G_FMT, it succeeds only
+    # after userspace can dequeue an actual capture buffer. Limit each attempt
+    # so a wedged producer cannot defeat READY_TIMEOUT_SEC indefinitely.
+    : >"$probe_file"
+    if [[ -c "$DEVICE" ]] &&
+       timeout "$FRAME_PROBE_TIMEOUT" v4l2-ctl -d "$DEVICE" \
+           --stream-mmap=3 --stream-count=1 --stream-to="$probe_file" \
+           >/dev/null 2>&1 &&
+       [[ -s "$probe_file" ]]; then
+        # Resolve the stable /dev/tachyon-camera symlink to its sysfs device
+        # before remove. A synthetic remove may temporarily delete the devnode
+        # and symlink, while the sysfs object remains available for the add.
+        devpath=$(udevadm info --query=path --name="$DEVICE" 2>/dev/null || true)
+        if [[ -n "$devpath" && -e "/sys$devpath" ]]; then
+            udevadm trigger --action=remove "/sys$devpath" 2>/dev/null || true
+            udevadm settle --timeout=5 2>/dev/null || true
+
+            # udev settle waits for rule processing, not for every netlink
+            # listener. Keep the two events distinct so WirePlumber observes
+            # removal before it sees the replacement camera.
+            sleep "$REANNOUNCE_DELAY_SEC"
+
+            udevadm trigger --action=add "/sys$devpath" 2>/dev/null || true
+            udevadm settle --timeout=5 2>/dev/null || true
+            echo "camera ready, re-enumerated $DEVICE for desktop consumers"
+        else
+            echo "camera ready, but cannot resolve $DEVICE to sysfs; desktop discovery was not refreshed" >&2
+        fi
+        exit 0
+    fi
+    if [[ -n "$BRIDGE_PID" ]] && ! kill -0 "$BRIDGE_PID" 2>/dev/null; then
+        echo "camera bridge exited before producing a frame; allowing desktop startup without a camera" >&2
+        exit 0
+    fi
+    sleep 1
+done
+
+echo "no capture frame from $DEVICE after ${READY_TIMEOUT_SEC}s; allowing desktop startup without a camera" >&2
+exit 0

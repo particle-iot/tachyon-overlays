@@ -1,0 +1,54 @@
+#!/bin/sh
+# Refresh the linker cache and drop CamX's parsed-sensor cache.
+#
+# The /usr/lib/*.so* links ship in this package's payload, so dpkg has already
+# placed them by the time this runs; ldconfig just needs to see them. The CamX
+# cache is keyed on the sensor description files, and a stale entry makes a
+# freshly installed module invisible to enumeration.
+set -e
+
+# Remove the system-wide journald drop-in shipped up to 0.1~exp8.
+dpkg-maintscript-helper rm_conffile /etc/systemd/journald.conf.d/90-tachyon-camera-journald.conf 0.1~exp9~ -- "$@"
+
+case "$1" in
+configure)
+    ldconfig
+    rm -rf /var/cache/camera/*.bin /var/cache/camera/camxcache* 2>/dev/null || true
+
+    # Enable on first install only - "$2" carries the previous version and is
+    # empty for a fresh one. deb-systemd-helper edits the target root without
+    # requiring a running PID 1, which matters when Composer installs this
+    # package into an image chroot where /run/systemd/system does not exist.
+    # Keeping enablement outside the live-system check also makes a freshly
+    # flashed image start the bridge on its very first boot.
+    #
+    # Do not re-enable on upgrade: an operator may have disabled the bridge to
+    # use camx-capture or another native HAL3 client, since CamX permits only
+    # one process to hold a camera at a time.
+    if [ -z "$2" ]; then
+        command -v deb-systemd-helper >/dev/null 2>&1 || {
+            echo "deb-systemd-helper is required to enable tachyon-camera-bridge.service" >&2
+            exit 1
+        }
+        deb-systemd-helper unmask tachyon-camera-bridge.service >/dev/null || true
+        deb-systemd-helper enable tachyon-camera-bridge.service >/dev/null
+    fi
+
+    # Reload only when systemd is actually running. Image chroots deliberately
+    # have no system manager; the enable state above is still fully written.
+    if [ -d /run/systemd/system ]; then
+        systemctl daemon-reload 2>/dev/null || true
+
+        # journald reads its configuration only at startup; after removing the
+        # old drop-in, restart it so the defaults apply now, not after a reboot.
+        if [ -n "$2" ] && dpkg --compare-versions "$2" lt 0.1~exp9~; then
+            systemctl restart systemd-journald 2>/dev/null || true
+        fi
+    fi
+    if command -v udevadm >/dev/null 2>&1; then
+        udevadm control --reload-rules 2>/dev/null || true
+    fi
+    ;;
+esac
+
+exit 0
