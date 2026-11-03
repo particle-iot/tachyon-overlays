@@ -1,0 +1,12 @@
+{
+  "name": "limit-battery-charge-current",
+  "description": "Set the battery charge current to 2.5 A (charge_control_limit level 2) once per boot instead of the ADSP's 3.6 A default, as on 20.04. A level written at runtime is kept until reboot.",
+  "commands": [
+    {
+      "type": "copy-into-chroot",
+      "source": "files/99-battery-charge-limit.rules",
+      "destination": "/etc/udev/rules.d/99-battery-charge-limit.rules",
+      "permissions": "644"
+    }
+  ]
+}
