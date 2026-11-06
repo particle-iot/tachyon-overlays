@@ -38,6 +38,10 @@
       },
       {
         "type": "overlay",
+        "name": "limit-battery-charge-current"
+      },
+      {
+        "type": "overlay",
         "name": "root-passwd"
       },
       {

@@ -1,0 +1,27 @@
+# Set the battery charge current to 2.5 A once per boot, as on 20.04.
+#
+# charge_control_limit indexes qcom,thermal-mitigation in the device tree:
+# 0 = ADSP maximum (3.6 A for the Tachyon battery), 1 = 3.0 A, 2 = 2.5 A,
+# 3 = 1.0 A, 4 = 0.5 A. A level written at runtime is kept until reboot.
+# To use another level permanently, change the value written below; to keep
+# the ADSP maximum, remove this file.
+#
+# This has to run on "change": the "add" uevent for qcom-battmgr-bat never
+# reaches udev. The power_supply core sends it before the supply is ready,
+# and qcom_battmgr returns -EAGAIN for its properties until the ADSP service
+# is up; a uevent whose properties cannot be read is dropped. The first
+# change uevent that gets through arrives once the ADSP is up.
+#
+# The marker in /run is created only once sysfs shows a level other than 0.
+# The check reads sysfs itself because udev keeps returning the value it read
+# before the write. If the write fails, the level stays 0 and the next change
+# uevent retries.
+ACTION!="add|change", GOTO="battery_charge_limit_end"
+SUBSYSTEM!="power_supply", GOTO="battery_charge_limit_end"
+KERNEL!="qcom-battmgr-bat", GOTO="battery_charge_limit_end"
+TEST=="/run/battery-charge-limit-set", GOTO="battery_charge_limit_end"
+
+ATTR{charge_control_limit}=="0", ATTR{charge_control_limit}="2"
+RUN+="/bin/sh -c 'grep -qvx 0 %S%p/charge_control_limit && touch /run/battery-charge-limit-set'"
+
+LABEL="battery_charge_limit_end"
